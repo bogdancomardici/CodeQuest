@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ip2024
+      POSTGRES_USER: ip2024
+      POSTGRES_DB: ip2024
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
