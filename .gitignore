@@ -2,3 +2,4 @@ postgres-data/*
 *.docx
 backend/venv/
 backend/__pycache__/
+frontend/node_modules/
