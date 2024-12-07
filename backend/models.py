@@ -10,7 +10,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 badge_id_seq = Sequence('badge_id_seq')
-challange_id_seq = Sequence('challange_id_seq')
+challenge_id_seq = Sequence('challenge_id_seq')
 resource_id_seq = Sequence('resource_id_seq')
 users_id_seq = Sequence('users_id_seq')
 
@@ -34,9 +34,9 @@ class Badge(Base):
     description = Column(String)
 
 
-class Challange(Base):
-    __tablename__ = "challanges"
-    id = Column(Integer, Sequence('challange_id_seq'),
+class challenge(Base):
+    __tablename__ = "challenges"
+    id = Column(Integer, Sequence('challenge_id_seq'),
                 primary_key=True, index=True)
     title = Column(String, unique=True, index=True)
     description = Column(String)
@@ -65,11 +65,11 @@ class UserBadge(Base):
     badge_id = Column(Integer, ForeignKey('badges.id'), primary_key=True)
 
 
-class UserChallange(Base):
-    __tablename__ = "userchallange"
+class Userchallenge(Base):
+    __tablename__ = "userchallenge"
     user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    challange_id = Column(Integer, ForeignKey(
-        'challanges.id'), primary_key=True)
+    challenge_id = Column(Integer, ForeignKey(
+        'challenges.id'), primary_key=True)
 
 
 Base.metadata.create_all(bind=engine)

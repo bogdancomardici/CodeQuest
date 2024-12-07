@@ -2,9 +2,10 @@ import logging
 from fastapi import FastAPI, HTTPException, Depends
 from typing import List
 from sqlalchemy.orm import Session
-from models import Base, engine, SessionLocal, User, Badge, Challange, Friend, Resource, UserBadge, UserChallange
-from schemas import UserCreate, UserRead, BadgeCreate, BadgeRead, ChallangeCreate, ChallangeRead
+from models import Base, engine, SessionLocal, User, Badge, challenge, Friend, Resource, UserBadge, Userchallenge
+from schemas import UserCreate, UserRead, UserUpdate, BadgeCreate, BadgeRead, BadgeUpdate, challengeCreate, challengeRead, challengeUpdate, UserLogin
 import os
+import bcrypt
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -30,8 +31,10 @@ def read_root():
 
 @app.post("/users/", response_model=UserRead)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    hashed_password = bcrypt.hashpw(
+        user.password.encode('utf-8'), bcrypt.gensalt())
     db_user = User(username=user.username, email=user.email,
-                   password=user.password, role=user.role)
+                   password=hashed_password.decode('utf-8'), role=user.role)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -52,6 +55,21 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     return user
 
 
+@app.put("/users/{user_id}", response_model=UserRead)
+def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    for key, value in user.dict(exclude_unset=True).items():
+        if key == "password":
+            value = bcrypt.hashpw(value.encode('utf-8'),
+                                  bcrypt.gensalt()).decode('utf-8')
+        setattr(db_user, key, value)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
 @app.delete("/users/{user_id}", response_model=UserRead)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
@@ -60,6 +78,15 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return user
+
+
+@app.post("/login/", response_model=UserRead)
+def login_user(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if db_user is None or not bcrypt.checkpw(user.password.encode('utf-8'), db_user.password.encode('utf-8')):
+        raise HTTPException(
+            status_code=401, detail="Invalid username or password")
+    return db_user
 
 
 @app.post("/badges/", response_model=BadgeRead)
@@ -85,6 +112,18 @@ def read_badge(badge_id: int, db: Session = Depends(get_db)):
     return badge
 
 
+@app.put("/badges/{badge_id}", response_model=BadgeRead)
+def update_badge(badge_id: int, badge: BadgeUpdate, db: Session = Depends(get_db)):
+    db_badge = db.query(Badge).filter(Badge.id == badge_id).first()
+    if db_badge is None:
+        raise HTTPException(status_code=404, detail="Badge not found")
+    for key, value in badge.dict(exclude_unset=True).items():
+        setattr(db_badge, key, value)
+    db.commit()
+    db.refresh(db_badge)
+    return db_badge
+
+
 @app.delete("/badges/{badge_id}", response_model=BadgeRead)
 def delete_badge(badge_id: int, db: Session = Depends(get_db)):
     badge = db.query(Badge).filter(Badge.id == badge_id).first()
@@ -95,37 +134,50 @@ def delete_badge(badge_id: int, db: Session = Depends(get_db)):
     return badge
 
 
-@app.post("/challanges/", response_model=ChallangeRead)
-def create_challange(challange: ChallangeCreate, db: Session = Depends(get_db)):
-    db_challange = Challange(title=challange.title, description=challange.description,
-                             output=challange.output, difficulty=challange.difficulty, language=challange.language)
-    db.add(db_challange)
+@app.post("/challenges/", response_model=challengeRead)
+def create_challenge(challenge: challengeCreate, db: Session = Depends(get_db)):
+    db_challenge = challenge(title=challenge.title, description=challenge.description,
+                             output=challenge.output, difficulty=challenge.difficulty, language=challenge.language)
+    db.add(db_challenge)
     db.commit()
-    db.refresh(db_challange)
-    return db_challange
+    db.refresh(db_challenge)
+    return db_challenge
 
 
-@app.get("/challanges/", response_model=List[ChallangeRead])
-def read_challanges(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    challanges = db.query(Challange).offset(skip).limit(limit).all()
-    return challanges
+@app.get("/challenges/", response_model=List[challengeRead])
+def read_challenges(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    challenges = db.query(challenge).offset(skip).limit(limit).all()
+    return challenges
 
 
-@app.get("/challanges/{challange_id}", response_model=ChallangeRead)
-def read_challange(challange_id: int, db: Session = Depends(get_db)):
-    challange = db.query(Challange).filter(
-        Challange.id == challange_id).first()
-    if challange is None:
-        raise HTTPException(status_code=404, detail="Challange not found")
-    return challange
+@app.get("/challenges/{challenge_id}", response_model=challengeRead)
+def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
+    challenge = db.query(challenge).filter(
+        challenge.id == challenge_id).first()
+    if challenge is None:
+        raise HTTPException(status_code=404, detail="challenge not found")
+    return challenge
 
 
-@app.delete("/challanges/{challange_id}", response_model=ChallangeRead)
-def delete_challange(challange_id: int, db: Session = Depends(get_db)):
-    challange = db.query(Challange).filter(
-        Challange.id == challange_id).first()
-    if challange is None:
-        raise HTTPException(status_code=404, detail="Challange not found")
-    db.delete(challange)
+@app.put("/challenges/{challenge_id}", response_model=challengeRead)
+def update_challenge(challenge_id: int, challenge: challengeUpdate, db: Session = Depends(get_db)):
+    db_challenge = db.query(challenge).filter(
+        challenge.id == challenge_id).first()
+    if db_challenge is None:
+        raise HTTPException(status_code=404, detail="challenge not found")
+    for key, value in challenge.dict(exclude_unset=True).items():
+        setattr(db_challenge, key, value)
     db.commit()
-    return challange
+    db.refresh(db_challenge)
+    return db_challenge
+
+
+@app.delete("/challenges/{challenge_id}", response_model=challengeRead)
+def delete_challenge(challenge_id: int, db: Session = Depends(get_db)):
+    challenge = db.query(challenge).filter(
+        challenge.id == challenge_id).first()
+    if challenge is None:
+        raise HTTPException(status_code=404, detail="challenge not found")
+    db.delete(challenge)
+    db.commit()
+    return challenge

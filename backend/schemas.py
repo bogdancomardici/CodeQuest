@@ -19,6 +19,19 @@ class UserRead(BaseModel):
         from_attributes = True
 
 
+class UserUpdate(BaseModel):
+    username: str = None
+    email: str = None
+    password: str = None
+    role: str = None
+    score: int = None
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
 class BadgeCreate(BaseModel):
     title: str
     description: str
@@ -33,7 +46,12 @@ class BadgeRead(BaseModel):
         from_attributes = True
 
 
-class ChallangeCreate(BaseModel):
+class BadgeUpdate(BaseModel):
+    title: str = None
+    description: str = None
+
+
+class challengeCreate(BaseModel):
     title: str
     description: str
     output: str
@@ -41,7 +59,7 @@ class ChallangeCreate(BaseModel):
     language: str
 
 
-class ChallangeRead(BaseModel):
+class challengeRead(BaseModel):
     id: int
     title: str
     description: str
@@ -51,3 +69,11 @@ class ChallangeRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class challengeUpdate(BaseModel):
+    title: str = None
+    description: str = None
+    output: str = None
+    difficulty: str = None
+    language: str = None

@@ -11,19 +11,19 @@ CREATE TABLE "public"."badges" (
 ) WITH (oids = false);
 
 
-DROP TABLE IF EXISTS "challanges";
-DROP SEQUENCE IF EXISTS challange_id_seq;
-CREATE SEQUENCE challange_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+DROP TABLE IF EXISTS "challenges";
+DROP SEQUENCE IF EXISTS challenge_id_seq;
+CREATE SEQUENCE challenge_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
 
-CREATE TABLE "public"."challanges" (
-    "id" integer DEFAULT nextval('challange_id_seq') NOT NULL,
+CREATE TABLE "public"."challenges" (
+    "id" integer DEFAULT nextval('challenge_id_seq') NOT NULL,
     "title" character varying(50) NOT NULL,
     "description" character varying(200) NOT NULL,
     "output" character varying(300) NOT NULL,
     "difficulty" character varying(20) NOT NULL,
     "language" character varying(20) NOT NULL,
-    CONSTRAINT "challange_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "challange_title_key" UNIQUE ("title")
+    CONSTRAINT "challenge_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "challenge_title_key" UNIQUE ("title")
 ) WITH (oids = false);
 
 
@@ -56,11 +56,11 @@ CREATE TABLE "public"."userbadge" (
 ) WITH (oids = false);
 
 
-DROP TABLE IF EXISTS "userchallange";
-CREATE TABLE "public"."userchallange" (
+DROP TABLE IF EXISTS "userchallenge";
+CREATE TABLE "public"."userchallenge" (
     "user_id" integer NOT NULL,
-    "challange_id" integer NOT NULL,
-    CONSTRAINT "userchallange_pkey" PRIMARY KEY ("user_id", "challange_id")
+    "challenge_id" integer NOT NULL,
+    CONSTRAINT "userchallenge_pkey" PRIMARY KEY ("user_id", "challenge_id")
 ) WITH (oids = false);
 
 
@@ -87,5 +87,5 @@ ALTER TABLE ONLY "public"."friends" ADD CONSTRAINT "friend_user_id2_fkey" FOREIG
 ALTER TABLE ONLY "public"."userbadge" ADD CONSTRAINT "friends_badge_id_fkey" FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE NOT DEFERRABLE;
 ALTER TABLE ONLY "public"."userbadge" ADD CONSTRAINT "friends_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 
-ALTER TABLE ONLY "public"."userchallange" ADD CONSTRAINT "userchallange_challange_id_fkey" FOREIGN KEY (challange_id) REFERENCES challanges(id) ON DELETE CASCADE NOT DEFERRABLE;
-ALTER TABLE ONLY "public"."userchallange" ADD CONSTRAINT "userchallange_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE ONLY "public"."userchallenge" ADD CONSTRAINT "userchallenge_challenge_id_fkey" FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE ONLY "public"."userchallenge" ADD CONSTRAINT "userchallenge_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
