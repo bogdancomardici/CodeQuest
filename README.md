@@ -12,3 +12,4 @@ CodeQuest este o platformă educațională web concepută pentru a transforma î
 2. Run `docker-compose up` in the root of the project
 3. Access the database admin dashboard at `localhost:8080`
 4. Access the backend documentation at `localhost:8000/docs`
+5. Access the frontend at `localhost:3000`
