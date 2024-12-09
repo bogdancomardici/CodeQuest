@@ -6,6 +6,7 @@ from models import Base, engine, SessionLocal, User, Badge, challenge, Friend, R
 from schemas import UserCreate, UserRead, UserUpdate, BadgeCreate, BadgeRead, BadgeUpdate, challengeCreate, challengeRead, challengeUpdate, UserLogin
 import os
 import bcrypt
+from fastapi.middleware.cors import CORSMiddleware
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,6 +15,15 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 logger.info(f"DATABASE_URL: {DATABASE_URL}")
 
 app = FastAPI()
+
+#Cors config
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_db():
