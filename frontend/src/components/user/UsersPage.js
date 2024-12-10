@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getUsers } from "../api/users";
+import { getUsers } from "../../api/users";
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -8,10 +8,11 @@ const UsersPage = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const data = await getUsers();
-        setUsers(data);
-      } catch (err) {
-        setError("Failed to fetch users. Please try again later.");
+        const usersData = await getUsers();
+        setUsers(usersData);
+      } catch (error) {
+        setError("Failed to fetch users.");
+        console.error("Failed to fetch users:", error);
       }
     };
 
