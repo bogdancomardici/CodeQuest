@@ -7,6 +7,8 @@ import Dashboard from "./components/dashboard/Dashboard.js";
 //not implemented yet
 import Challenges from "./components/challenges/Challenges";
 import SoloChallenge from "./components/solochallenge/SoloChallenge";
+import Resources from "./components/resources/Resources.js";
+import SoloResource from "./components/solosresource/SoloResource";
 // import Leaderboard from "./components/leaderboard/Leaderboard";
 function App() {
   return (
@@ -18,6 +20,9 @@ function App() {
           <Route path="/dashboard" element={<Dashboard/>} />
           <Route path="/challenges" element={<Challenges />} />
           <Route path="/soloChallenge/:id" element={<SoloChallenge />} />
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/resource/:id" element={<SoloResource />} />
+
           {/* <Route path="/leaderboard" element={<Leaderboard/>} /> */}
         </Routes>
       </Router>

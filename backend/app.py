@@ -3,7 +3,21 @@ from fastapi import FastAPI, HTTPException, Depends
 from typing import List
 from sqlalchemy.orm import Session
 from models import Base, engine, SessionLocal, User, Badge, challenge, Friend, Resource, UserBadge, Userchallenge
-from schemas import UserCreate, UserRead, UserUpdate, BadgeCreate, BadgeRead, BadgeUpdate, challengeCreate, challengeRead, challengeUpdate, UserLogin
+from schemas import (
+    UserCreate, 
+    UserRead, 
+    UserUpdate, 
+    BadgeCreate, 
+    BadgeRead, 
+    BadgeUpdate, 
+    challengeCreate, 
+    challengeRead, 
+    challengeUpdate, 
+    UserLogin, 
+    resourceRead,
+    resourceCreate,
+    resourceUpdate
+)
 import os
 import bcrypt
 from fastapi.middleware.cors import CORSMiddleware
@@ -191,3 +205,24 @@ def delete_challenge(challenge_id: int, db: Session = Depends(get_db)):
     db.delete(challenge)
     db.commit()
     return challenge
+
+@app.get("/resources/", response_model=List[resourceRead])
+def read_resources(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    resources = db.query(Resource).offset(skip).limit(limit).all()
+    return resources
+
+@app.post("/resources/", response_model=resourceRead)
+def create_resource(resource: resourceCreate, db: Session = Depends(get_db)):
+    db_resource = Resource(title=resource.title, description=resource.description)
+    db.add(db_resource)
+    db.commit()
+    db.refresh(db_resource)
+    return db_resource
+
+@app.get("/resources/{resource_id}", response_model=resourceRead)
+def read_resource(resource_id: int, db: Session = Depends(get_db)):
+    db_resource = db.query(Resource).filter(Resource.id == resource_id).first()
+    if db_resource is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return db_resource
+

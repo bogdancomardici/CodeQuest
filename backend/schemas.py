@@ -77,3 +77,21 @@ class challengeUpdate(BaseModel):
     output: str = None
     difficulty: str = None
     language: str = None
+
+class resourceCreate(BaseModel):
+    title: str
+    description: str
+
+
+class resourceRead(BaseModel):
+    id: int
+    title: str
+    description: str
+
+    class Config:
+        from_attributes = True
+
+
+class resourceUpdate(BaseModel):
+    title: str = None
+    description: str = None
