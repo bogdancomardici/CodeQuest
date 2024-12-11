@@ -95,3 +95,5 @@ class resourceRead(BaseModel):
 class resourceUpdate(BaseModel):
     title: str = None
     description: str = None
+
+

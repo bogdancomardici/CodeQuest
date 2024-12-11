@@ -67,8 +67,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @app.get("/users/", response_model=List[UserRead])
 def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
+    db_users = db.query(User).offset(skip).limit(limit).all()
+    return db_users
 
 
 @app.get("/users/{user_id}", response_model=UserRead)

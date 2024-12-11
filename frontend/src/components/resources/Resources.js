@@ -26,8 +26,9 @@ function Resources() {
 
   useEffect(() => {
     const filtered = resources.filter((resource) =>
-      resource.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resource.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
     setFilteredResources(filtered);
   }, [searchTerm, resources]);
 

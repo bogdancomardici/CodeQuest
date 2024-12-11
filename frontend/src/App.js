@@ -4,12 +4,11 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import UsersPage from "./components/user/UsersPage";
 import Navbar from "./components/navbar/Navbar";
 import Dashboard from "./components/dashboard/Dashboard.js";
-//not implemented yet
 import Challenges from "./components/challenges/Challenges";
 import SoloChallenge from "./components/solochallenge/SoloChallenge";
 import Resources from "./components/resources/Resources.js";
 import SoloResource from "./components/solosresource/SoloResource";
-// import Leaderboard from "./components/leaderboard/Leaderboard";
+import Leaderboard from "./components/leaderboard/Leaderboard";
 function App() {
   return (
     <div className="App">
@@ -22,10 +21,10 @@ function App() {
           <Route path="/soloChallenge/:id" element={<SoloChallenge />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/resource/:id" element={<SoloResource />} />
-
-          {/* <Route path="/leaderboard" element={<Leaderboard/>} /> */}
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
       </Router>
+
     </div>
   );
 }

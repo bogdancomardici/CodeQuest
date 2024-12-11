@@ -26,8 +26,12 @@ function Challenges() {
 
   useEffect(() => {
     const filtered = challenges.filter((challenge) =>
-      challenge.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+
+      challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      challenge.difficulty.toLowerCase().includes(searchTerm.toLowerCase())||
+      challenge.language.toLowerCase().includes(searchTerm.toLowerCase())
+
+  );
     setFilteredChallenges(filtered);
   }, [searchTerm, challenges]);
 
@@ -56,6 +60,8 @@ function Challenges() {
                 {filteredChallenges.map((challenge) => (
                   <li key={challenge.id} className="list-item-challenges">
                     <span>{challenge.title}</span>
+                    <span>{challenge.language}</span>
+                    <span>{challenge.difficulty}</span>
                     <div className="button-container-challenges">
                       <button
                         className="button-challenges solo-button"
