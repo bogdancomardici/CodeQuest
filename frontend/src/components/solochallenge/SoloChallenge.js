@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "./solochallenge.css";
-import { getChallenge } from "../../api/challenges";
+import { getChallenge, submitCode } from "../../api/challenges";
 
 function SoloChallenge() {
   const { id } = useParams();
@@ -10,6 +10,9 @@ function SoloChallenge() {
   const [error, setError] = useState(null);
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [code, setCode] = useState(
+    "public class Main{\npublic static int main(String[] args){ \nreturn 1; \n} \n}"
+  );
 
   useEffect(() => {
     const fetchChallenge = async () => {
@@ -41,8 +44,14 @@ function SoloChallenge() {
     setIsRunning((prev) => !prev);
   };
 
-  const handleSubmit = () => {
-    alert("Code submitted!");
+  const handleSubmit = async () => {
+    try {
+      const result = await submitCode(id, code);
+      alert(`Code submitted! Status: ${result.status}`);
+    } catch (error) {
+      console.error("Error submitting code:", error);
+      alert("Error submitting code.");
+    }
   };
 
   const formatTime = () => {
@@ -101,11 +110,8 @@ function SoloChallenge() {
 
           <textarea
             name="postContent"
-            defaultValue="public class Main{
-            public static int main(String[] args){ 
-                return 1; 
-                } 
-            }"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
             rows={20}
             cols={80}
           />

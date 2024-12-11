@@ -1,9 +1,9 @@
 import logging
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, requests
 from typing import List
 from sqlalchemy.orm import Session
 from models import Base, engine, SessionLocal, User, Badge, challenge, Friend, Resource, UserBadge, Userchallenge
-from schemas import UserCreate, UserRead, UserUpdate, BadgeCreate, BadgeRead, BadgeUpdate, challengeCreate, challengeRead, challengeUpdate, UserLogin
+from schemas import CodeSubmission, CodeSubmissionResult, UserCreate, UserRead, UserUpdate, BadgeCreate, BadgeRead, BadgeUpdate, challengeCreate, challengeRead, challengeUpdate, UserLogin
 import os
 import bcrypt
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,10 +16,10 @@ logger.info(f"DATABASE_URL: {DATABASE_URL}")
 
 app = FastAPI()
 
-#Cors config
+# Cors config
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -191,3 +191,44 @@ def delete_challenge(challenge_id: int, db: Session = Depends(get_db)):
     db.delete(challenge)
     db.commit()
     return challenge
+
+
+@app.post("/submit-code/", response_model=CodeSubmissionResult)
+def submit_code(submission: CodeSubmission, db: Session = Depends(get_db)):
+    db_challenge = db.query(challenge).filter(
+        challenge.id == submission.challenge_id).first()
+    if db_challenge is None:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    # Send code to Judge0 API for evaluation
+    judge0_url = "https://api.judge0.com/submissions/?base64_encoded=false&wait=true"
+    payload = {
+        "source_code": submission.code,
+        "language_id": get_language_id(db_challenge.language),
+        "expected_output": db_challenge.output
+    }
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(judge0_url, json=payload, headers=headers)
+    if response.status_code != 201:
+        raise HTTPException(
+            status_code=500, detail="Error communicating with Judge0 API")
+
+    result = response.json()
+    return CodeSubmissionResult(
+        status=result["status"]["description"],
+        stdout=result["stdout"],
+        stderr=result["stderr"],
+        expected_output=db_challenge.output,
+        actual_output=result["stdout"]
+    )
+
+
+def get_language_id(language: str) -> int:
+    language_map = {
+        "Python": 71,
+        "JavaScript": 63,
+        "Go": 60,
+        # Add other languages and their corresponding Judge0 language IDs here
+    }
+    # Default to Python if language not found
+    return language_map.get(language, 71)

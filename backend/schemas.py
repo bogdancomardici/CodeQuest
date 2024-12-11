@@ -77,3 +77,16 @@ class challengeUpdate(BaseModel):
     output: str = None
     difficulty: str = None
     language: str = None
+
+
+class CodeSubmission(BaseModel):
+    challenge_id: int
+    code: str
+
+
+class CodeSubmissionResult(BaseModel):
+    status: str
+    stdout: str
+    stderr: str
+    expected_output: str
+    actual_output: str
