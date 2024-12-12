@@ -1,7 +1,25 @@
-
-DROP TABLE IF EXISTS "badges";
-DROP SEQUENCE IF EXISTS badge_id_seq;
+-- Create sequences first
+DROP SEQUENCE IF EXISTS badge_id_seq CASCADE;
 CREATE SEQUENCE badge_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS challenge_id_seq CASCADE;
+CREATE SEQUENCE challenge_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS resource_id_seq CASCADE;
+CREATE SEQUENCE resource_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS users_id_seq CASCADE;
+CREATE SEQUENCE users_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP TABLE IF EXISTS "friends" CASCADE;
+DROP TABLE IF EXISTS "userbadge" CASCADE;
+DROP TABLE IF EXISTS "userchallenge" CASCADE;
+
+DROP TABLE IF EXISTS "badges" CASCADE;
+DROP TABLE IF EXISTS "challenges" CASCADE;
+DROP TABLE IF EXISTS "resources" CASCADE;
+DROP TABLE IF EXISTS "users" CASCADE;
+
 
 CREATE TABLE "public"."badges" (
     "id" integer DEFAULT nextval('badge_id_seq') NOT NULL,
@@ -13,8 +31,8 @@ CREATE TABLE "public"."badges" (
 
 
 DROP TABLE IF EXISTS "challenges";
-DROP SEQUENCE IF EXISTS challenge_id_seq;
-CREATE SEQUENCE challenge_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+
 
 CREATE TABLE "public"."challenges" (
     "id" integer DEFAULT nextval('challenge_id_seq') NOT NULL,
@@ -37,8 +55,7 @@ CREATE TABLE "public"."friends" (
 
 
 DROP TABLE IF EXISTS "resources";
-DROP SEQUENCE IF EXISTS resource_id_seq;
-CREATE SEQUENCE resource_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
 
 CREATE TABLE "public"."resources" (
     "id" integer DEFAULT nextval('resource_id_seq') NOT NULL,
@@ -66,8 +83,7 @@ CREATE TABLE "public"."userchallenge" (
 
 
 DROP TABLE IF EXISTS "users";
-DROP SEQUENCE IF EXISTS users_id_seq;
-CREATE SEQUENCE users_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
 
 CREATE TABLE "public"."users" (
     "id" integer DEFAULT nextval('users_id_seq') NOT NULL,
