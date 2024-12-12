@@ -48,6 +48,7 @@ function LandingPage() {
         <div className="grid-item-landing invisible-landing"></div>
         <div className="grid-item-landing middle-landing">
           <div className="card-landing">
+          <div><h2>What's new?</h2></div>
             <div className="tab-buttons">
               <button
                 className={`tab-button ${

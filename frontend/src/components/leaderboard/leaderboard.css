@@ -58,12 +58,19 @@
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  height: 500px;
+  display: flex;
+  flex-direction: column;
 }
 
 .list-leaderboard {
   list-style: none;
   padding: 0;
   margin: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .list-item-leaderboard {
@@ -77,24 +84,21 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.button-container-leaderboard {
+.list-item-placeholder {
   display: flex;
-  gap: 10px;
-}
-
-.button-leaderboard {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.9rem;
+  justify-content: space-between;
+  align-items: center;
+  background-color: transparent;
+  box-shadow: none;
+  height: 5px;
+  visibility: hidden;
 }
 
 .pagination-controls {
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .pagination-button {
@@ -104,7 +108,6 @@
   background-color: #007bff;
   color: #fff;
   cursor: pointer;
-  font-size: 1rem;
 }
 
 .pagination-button:disabled {
@@ -112,26 +115,11 @@
   cursor: not-allowed;
 }
 
-.card-leaderboard {
-  width: 100%;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  min-height: 200px;
-  text-align: center;
-}
-
-.solo-button {
+.see-profile-button {
+  padding: 10px 15px;
   background-color: #86bc25;
-  color: #fff;
-}
-
-.friend-button {
-  background-color: #007bff;
-  color: #fff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
