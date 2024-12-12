@@ -29,6 +29,7 @@ CREATE TABLE "public"."badges" (
     CONSTRAINT "badge_title_key" UNIQUE ("title")
 ) WITH (oids = false);
 
+
 DROP TABLE IF EXISTS "challenges";
 
 
@@ -44,12 +45,14 @@ CREATE TABLE "public"."challenges" (
     CONSTRAINT "challenge_title_key" UNIQUE ("title")
 ) WITH (oids = false);
 
+
 DROP TABLE IF EXISTS "friends";
 CREATE TABLE "public"."friends" (
     "user_id1" integer NOT NULL,
     "user_id2" integer NOT NULL,
     CONSTRAINT "friend_pkey" PRIMARY KEY ("user_id1", "user_id2")
 ) WITH (oids = false);
+
 
 DROP TABLE IF EXISTS "resources";
 
@@ -62,6 +65,7 @@ CREATE TABLE "public"."resources" (
     CONSTRAINT "resource_title_key" UNIQUE ("title")
 ) WITH (oids = false);
 
+
 DROP TABLE IF EXISTS "userbadge";
 CREATE TABLE "public"."userbadge" (
     "user_id" integer NOT NULL,
@@ -69,12 +73,14 @@ CREATE TABLE "public"."userbadge" (
     CONSTRAINT "friends_pkey" PRIMARY KEY ("user_id", "badge_id")
 ) WITH (oids = false);
 
+
 DROP TABLE IF EXISTS "userchallenge";
 CREATE TABLE "public"."userchallenge" (
     "user_id" integer NOT NULL,
     "challenge_id" integer NOT NULL,
     CONSTRAINT "userchallenge_pkey" PRIMARY KEY ("user_id", "challenge_id")
 ) WITH (oids = false);
+
 
 DROP TABLE IF EXISTS "users";
 
@@ -91,6 +97,7 @@ CREATE TABLE "public"."users" (
     CONSTRAINT "users_username_key" UNIQUE ("username")
 ) WITH (oids = false);
 
+
 ALTER TABLE ONLY "public"."friends" ADD CONSTRAINT "friend_user_id1_fkey" FOREIGN KEY (user_id1) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 ALTER TABLE ONLY "public"."friends" ADD CONSTRAINT "friend_user_id2_fkey" FOREIGN KEY (user_id2) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 
@@ -99,22 +106,18 @@ ALTER TABLE ONLY "public"."userbadge" ADD CONSTRAINT "friends_user_id_fkey" FORE
 
 ALTER TABLE ONLY "public"."userchallenge" ADD CONSTRAINT "userchallenge_challenge_id_fkey" FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE NOT DEFERRABLE;
 ALTER TABLE ONLY "public"."userchallenge" ADD CONSTRAINT "userchallenge_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
-
 INSERT INTO badges (title, description) VALUES 
 ('Beginner Badge', 'Awarded for starting out'),
 ('Intermediate Badge', 'Awarded for progressing well'),
 ('Expert Badge', 'Awarded for mastery');
-
 INSERT INTO challenges (title, description, output, difficulty, language) VALUES
 ('Challenge 1', 'First challenge description', 'Expected Output 1', 'Easy', 'Python'),
 ('Challenge 2', 'Second challenge description', 'Expected Output 2', 'Medium', 'JavaScript'),
 ('Challenge 3', 'Third challenge description', 'Expected Output 3', 'Hard', 'Go');
-
 INSERT INTO resources (title, description) VALUES
 ('Resource 1', 'First resource description'),
 ('Resource 2', 'Second resource description'),
 ('Resource 3', 'Third resource description');
-
 INSERT INTO users (username, email, password, role, score) VALUES
 ('user1', 'user1@example.com', 'hashed_password1', 'admin', 100),
 ('user2', 'user2@example.com', 'hashed_password2', 'user', 50),

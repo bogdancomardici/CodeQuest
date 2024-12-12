@@ -51,7 +51,7 @@ class BadgeUpdate(BaseModel):
     description: str = None
 
 
-class challengeCreate(BaseModel):
+class ChallengeCreate(BaseModel):
     title: str
     description: str
     output: str
@@ -59,7 +59,7 @@ class challengeCreate(BaseModel):
     language: str
 
 
-class challengeRead(BaseModel):
+class ChallengeRead(BaseModel):
     id: int
     title: str
     description: str
@@ -71,22 +71,29 @@ class challengeRead(BaseModel):
         from_attributes = True
 
 
-class challengeUpdate(BaseModel):
+class ChallengeUpdate(BaseModel):
     title: str = None
     description: str = None
     output: str = None
     difficulty: str = None
     language: str = None
 
+class ResourceCreate(BaseModel):
+    title: str
+    description: str
 
-class CodeSubmission(BaseModel):
-    challenge_id: int
-    code: str
+
+class ResourceRead(BaseModel):
+    id: int
+    title: str
+    description: str
+
+    class Config:
+        from_attributes = True
 
 
-class CodeSubmissionResult(BaseModel):
-    status: str
-    stdout: str
-    stderr: str
-    expected_output: str
-    actual_output: str
+class ResourceUpdate(BaseModel):
+    title: str = None
+    description: str = None
+
+

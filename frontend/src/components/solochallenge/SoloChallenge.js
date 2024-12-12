@@ -70,6 +70,68 @@ function SoloChallenge() {
     return <div className="solo-challenge-container">{error}</div>;
   }
 
+  const getTextStart = (language) =>{
+    let returnString = "";
+    console.log("Return string" + returnString)
+    console.log(language + " Lang")
+
+    console.log(    language.toUpperCase()
+      + " Lang")
+    switch(language.toUpperCase()){
+      case "JAVA":
+        returnString = "public class Main {\n" +
+        "    public static void main(String[] args) {\n" +
+        "        // Write your code here\n" +
+        "    }\n" +
+        "}";
+        return returnString
+      case "PYTHON":
+        console.log(returnString)
+        returnString = "def main():\n" +
+        "    # Write your code here\n" +
+        "\n" +
+        "if __name__ == \"__main__\":\n" +
+        "    main()";
+        return returnString
+        
+      case "GO":
+        returnString = "package main\n" +
+        "\n" +
+        "import \"fmt\"\n" +
+        "\n" +
+        "func main() {\n" +
+        "    // Write your code here\n" +
+        "}";
+        return returnString
+      case "C":
+        returnString = "#include <stdio.h>\n" +
+        "\n" +
+        "int main() {\n" +
+        "    // Write your code here\n" +
+        "    return 0;\n" +
+        "}";
+        return returnString
+
+      case "C++":
+        returnString = "#include <iostream>\n" +
+        "\n" +
+        "int main() {\n" +
+        "    // Write your code here\n" +
+        "    return 0;\n" +
+        "}";
+        return returnString
+      case "JAVASCRIPT":
+        returnString = "function main() {\n" +
+        "    // Write your code here\n" +
+        "}\n" +
+        "\n" +
+        "main();";
+        return returnString
+      default :
+        returnString = "Will be implemented"
+        return returnString
+    }
+  }
   return (
     <div className="solo-challenge-container">
       <div className="grid-layout-solo">
@@ -103,13 +165,14 @@ function SoloChallenge() {
               {isRunning ? "Pause" : "Start"}
             </button>
             <p className="timer-time">{formatTime()}</p>
-            <button onClick={handleSubmit} className="submit-button">
+            <button onClick={handleSubmit}  className="submit-button">
               Submit
             </button>
           </div>
 
           <textarea
             name="postContent"
+            defaultValue = {getTextStart(challenge.language)}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             rows={20}
