@@ -9,14 +9,16 @@ import SoloChallenge from "./components/solochallenge/SoloChallenge";
 import Resources from "./components/resources/Resources.js";
 import SoloResource from "./components/solosresource/SoloResource";
 import Leaderboard from "./components/leaderboard/Leaderboard";
+import LandingPage from "./components/landingpage/LandingPage";
 function App() {
   return (
     <div className="App">
       <Router>
-        <Navbar /> 
+        <Navbar />
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/users" element={<UsersPage />} />
-          <Route path="/dashboard" element={<Dashboard/>} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/challenges" element={<Challenges />} />
           <Route path="/soloChallenge/:id" element={<SoloChallenge />} />
           <Route path="/resources" element={<Resources />} />
@@ -24,7 +26,6 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
       </Router>
-
     </div>
   );
 }

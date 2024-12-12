@@ -19,3 +19,13 @@ export const getResourceById = async (id) => {
     throw error;
   }
 };
+
+export const getResourcesWithPagination = async (skip = 0, limit = 5) => {
+  try {
+    const response = await api.get(`/resources/?skip=${skip}&limit=${limit}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching resources:", error);
+    throw error;
+  }
+};
