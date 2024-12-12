@@ -22,6 +22,11 @@ from schemas import (
 import os
 import bcrypt
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import Depends, status
+from starlette.responses import JSONResponse
+from fastapi import Security
+import secrets
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,8 +34,9 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL")
 logger.info(f"DATABASE_URL: {DATABASE_URL}")
 
-app = FastAPI()
 
+app = FastAPI()
+security = HTTPBasic()
 #Cors config
 app.add_middleware(
     CORSMiddleware,
@@ -248,4 +254,17 @@ def read_resource(resource_id: int, db: Session = Depends(get_db)):
 def get_resources(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
     return db.query(Resource).order_by(Resource.created_at.desc()).offset(skip).limit(limit).all()
 
+###SECURITY and AUTHENTICATION
+def authenticate_user(credentials: HTTPBasicCredentials = Depends(security), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == credentials.username).first()
+    if user and bcrypt.checkpw(credentials.password.encode('utf-8'), user.password.encode('utf-8')):
+        return user
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid username or password",
+        headers={"WWW-Authenticate": "Basic"},
+    )
 
+@app.get("/protected", response_model=UserRead)
+def protected_route(user: User = Depends(authenticate_user)):
+    return user
