@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI, HTTPException, Depends, requests
+from fastapi import FastAPI, HTTPException, Depends
 from typing import List
 from sqlalchemy.orm import Session
 from models import (
@@ -198,14 +198,8 @@ def delete_badge(badge_id: int, db: Session = Depends(get_db)):
 
 @app.post("/challenges/", response_model=ChallengeRead)
 def create_challenge(challenge: ChallengeCreate, db: Session = Depends(get_db)):
-    db_challenge = challenge(
-        title=challenge.title,
-        description=challenge.description,
-        input=challenge.input,
-        output=challenge.output,
-        difficulty=challenge.difficulty,
-        language=challenge.language,
-    )
+    db_challenge = challenge(title=challenge.title, description=challenge.description,
+                             output=challenge.output, difficulty=challenge.difficulty, language=challenge.language)
     db.add(db_challenge)
     db.commit()
     db.refresh(db_challenge)
@@ -217,16 +211,9 @@ def read_challenges(skip: int = 0, limit: int = 10, db: Session = Depends(get_db
     challenges = db.query(challenge).offset(skip).limit(limit).all()
     return challenges
 
-
 @app.get("/challenges/", response_model=List[ChallengeRead])
 def get_challenges(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
-    return (
-        db.query(Challenge)
-        .order_by(Challenge.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    return db.query(Challenge).order_by(Challenge.created_at.desc()).offset(skip).limit(limit).all()
 
 
 @app.get("/challenges/{challenge_id}", response_model=ChallengeRead)
@@ -238,9 +225,7 @@ def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/challenges/{challenge_id}", response_model=ChallengeRead)
-def update_challenge(
-    challenge_id: int, challenge: ChallengeUpdate, db: Session = Depends(get_db)
-):
+def update_challenge(challenge_id: int, challenge: ChallengeUpdate, db: Session = Depends(get_db)):
     db_challenge = db.query(challenge).filter(challenge.id == challenge_id).first()
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="challenge not found")
@@ -253,12 +238,12 @@ def update_challenge(
 
 @app.delete("/challenges/{challenge_id}", response_model=ChallengeRead)
 def delete_challenge(challenge_id: int, db: Session = Depends(get_db)):
-    challenge = db.query(challenge).filter(challenge.id == challenge_id).first()
-    if challenge is None:
+    ch = db.query(challenge).filter(challenge.id == challenge_id).first()
+    if ch is None:
         raise HTTPException(status_code=404, detail="challenge not found")
-    db.delete(challenge)
+    db.delete(ch)
     db.commit()
-    return challenge
+    return ch
 
 
 @app.get("/resources/", response_model=List[ResourceRead])
@@ -295,7 +280,7 @@ def get_resources(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
     )
 
 
-###SECURITY and AUTHENTICATION
+### SECURITY and AUTHENTICATION
 def authenticate_user(
     credentials: HTTPBasicCredentials = Depends(security), db: Session = Depends(get_db)
 ):
@@ -314,7 +299,6 @@ def authenticate_user(
 @app.get("/protected", response_model=UserRead)
 def protected_route(user: User = Depends(authenticate_user)):
     return user
-
 
 # @app.post("/submit-code/", response_model=CodeSubmissionResult)
 # def submit_code(submission: CodeSubmission, db: Session = Depends(get_db)):
@@ -344,7 +328,6 @@ def protected_route(user: User = Depends(authenticate_user)):
 #         expected_output=db_challenge.output,
 #         actual_output=result["stdout"]
 #     )
-
 
 def get_language_id(language: str) -> int:
     language_map = {

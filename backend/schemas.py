@@ -54,7 +54,6 @@ class BadgeUpdate(BaseModel):
 class ChallengeCreate(BaseModel):
     title: str
     description: str
-    input: str
     output: str
     difficulty: str
     language: str
@@ -64,7 +63,6 @@ class ChallengeRead(BaseModel):
     id: int
     title: str
     description: str
-    input: str
     output: str
     difficulty: str
     language: str
@@ -76,11 +74,9 @@ class ChallengeRead(BaseModel):
 class ChallengeUpdate(BaseModel):
     title: str = None
     description: str = None
-    input: str = None
     output: str = None
     difficulty: str = None
     language: str = None
-
 
 class ResourceCreate(BaseModel):
     title: str
