@@ -148,10 +148,6 @@ function SoloChallenge() {
               <strong>Description:</strong> {challenge.description}
             </p>
           </div>
-          <div className="card-solo">
-            <h3>Expected Output</h3>
-            <p>{challenge.output}</p>
-          </div>
         </div>
         <div className="grid-item-solo right-solo">
           <div className="language-display">
