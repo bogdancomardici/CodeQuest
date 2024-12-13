@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Sequence
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy.ext.declarative import declarative_base
 
 import os
 
@@ -35,15 +37,16 @@ class Badge(Base):
     description = Column(String)
 
 
-class challenge(Base):
+class Challenge(Base):
     __tablename__ = "challenges"
-    id = Column(Integer, Sequence('challenge_id_seq'),
-                primary_key=True, index=True)
-    title = Column(String, unique=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
     description = Column(String)
+    input = Column(String, nullable=True)
     output = Column(String)
     difficulty = Column(String)
     language = Column(String)
+
 
 
 class Friend(Base):

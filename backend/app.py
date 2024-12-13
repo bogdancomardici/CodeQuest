@@ -8,7 +8,7 @@ from models import (
     SessionLocal,
     User,
     Badge,
-    challenge,
+    Challenge,
     Friend,
     Resource,
     UserBadge,
@@ -197,39 +197,38 @@ def delete_badge(badge_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/challenges/", response_model=ChallengeRead)
-def create_challenge(challenge: ChallengeCreate, db: Session = Depends(get_db)):
-    db_challenge = challenge(title=challenge.title, description=challenge.description,
-                             output=challenge.output, difficulty=challenge.difficulty, language=challenge.language)
+def create_challenge(ch_data: ChallengeCreate, db: Session = Depends(get_db)):
+    db_challenge = Challenge(
+        title=ch_data.title,
+        description=ch_data.description,
+        input=ch_data.input,
+        output=ch_data.output,
+        difficulty=ch_data.difficulty,
+        language=ch_data.language
+    )
     db.add(db_challenge)
     db.commit()
     db.refresh(db_challenge)
     return db_challenge
 
-
 @app.get("/challenges/", response_model=List[ChallengeRead])
 def read_challenges(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    challenges = db.query(challenge).offset(skip).limit(limit).all()
+    challenges = db.query(Challenge).offset(skip).limit(limit).all()
     return challenges
-
-@app.get("/challenges/", response_model=List[ChallengeRead])
-def get_challenges(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
-    return db.query(Challenge).order_by(Challenge.created_at.desc()).offset(skip).limit(limit).all()
-
 
 @app.get("/challenges/{challenge_id}", response_model=ChallengeRead)
 def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
-    db_challenge = db.query(challenge).filter(challenge.id == challenge_id).first()
+    db_challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="challenge not found")
     return db_challenge
 
-
 @app.put("/challenges/{challenge_id}", response_model=ChallengeRead)
-def update_challenge(challenge_id: int, challenge: ChallengeUpdate, db: Session = Depends(get_db)):
-    db_challenge = db.query(challenge).filter(challenge.id == challenge_id).first()
+def update_challenge(challenge_id: int, ch_update: ChallengeUpdate, db: Session = Depends(get_db)):
+    db_challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="challenge not found")
-    for key, value in challenge.dict(exclude_unset=True).items():
+    for key, value in ch_update.dict(exclude_unset=True).items():
         setattr(db_challenge, key, value)
     db.commit()
     db.refresh(db_challenge)
@@ -238,12 +237,12 @@ def update_challenge(challenge_id: int, challenge: ChallengeUpdate, db: Session 
 
 @app.delete("/challenges/{challenge_id}", response_model=ChallengeRead)
 def delete_challenge(challenge_id: int, db: Session = Depends(get_db)):
-    ch = db.query(challenge).filter(challenge.id == challenge_id).first()
-    if ch is None:
+    db_ch = db.query(Challenge).filter(Challenge.id == challenge_id).first()
+    if db_ch is None:
         raise HTTPException(status_code=404, detail="challenge not found")
-    db.delete(ch)
+    db.delete(db_ch)
     db.commit()
-    return ch
+    return db_ch
 
 
 @app.get("/resources/", response_model=List[ResourceRead])
