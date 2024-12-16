@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class UserCreate(BaseModel):
@@ -81,6 +82,7 @@ class ChallengeUpdate(BaseModel):
     difficulty: str = None
     language: str = None
 
+
 class ResourceCreate(BaseModel):
     title: str
     description: str
@@ -98,3 +100,39 @@ class ResourceRead(BaseModel):
 class ResourceUpdate(BaseModel):
     title: str = None
     description: str = None
+
+
+class CodeSubmission(BaseModel):
+    source_code: str
+    challenge_id: int
+
+
+# {
+#   "stdout": "True",
+#   "time": "0.008",
+#   "memory": 3296,
+#   "stderr": null,
+#   "token": "17d554c1-1ef3-4c32-ab40-f18e995cef88",
+#   "compile_output": null,
+#   "message": null,
+#   "status": {
+#     "id": 3,
+#     "description": "Accepted"
+#   }
+# }
+
+
+class CodeSubmissionStatus(BaseModel):
+    id: int
+    description: str
+
+
+class CodeSubmissionResult(BaseModel):
+    stdout: Optional[str]
+    time: Optional[str]
+    memory: int
+    stderr: Optional[str]
+    token: str
+    compile_output: Optional[str]
+    message: Optional[str]
+    status: CodeSubmissionStatus
