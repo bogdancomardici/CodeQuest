@@ -28,7 +28,11 @@ from schemas import (
     ResourceRead,
     ResourceCreate,
     ResourceUpdate,
+    CodeSubmission,
+    CodeSubmissionResult,
 )
+import requests
+import base64
 
 import os
 import bcrypt
@@ -45,6 +49,8 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL")
 logger.info(f"DATABASE_URL: {DATABASE_URL}")
 
+JUDGE0_URL = os.getenv("JUDGE0_URL")
+RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 
 app = FastAPI()
 security = HTTPBasic()
@@ -76,7 +82,8 @@ def read_root():
     return {"Hello": "CodeQuest"}
 
 
-#Users
+# Users
+
 
 @app.post("/users/", response_model=UserRead)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
@@ -142,7 +149,9 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
     return user
 
-#Badges
+
+# Badges
+
 
 @app.post("/badges/", response_model=BadgeRead)
 def create_badge(badge: BadgeCreate, db: Session = Depends(get_db)):
@@ -188,7 +197,9 @@ def delete_badge(badge_id: int, db: Session = Depends(get_db)):
     db.commit()
     return badge
 
-#Challenges
+
+# Challenges
+
 
 @app.post("/challenges/", response_model=ChallengeRead)
 def create_challenge(ch_data: ChallengeCreate, db: Session = Depends(get_db)):
@@ -198,17 +209,19 @@ def create_challenge(ch_data: ChallengeCreate, db: Session = Depends(get_db)):
         input=ch_data.input,
         output=ch_data.output,
         difficulty=ch_data.difficulty,
-        language=ch_data.language
+        language=ch_data.language,
     )
     db.add(db_challenge)
     db.commit()
     db.refresh(db_challenge)
     return db_challenge
 
+
 @app.get("/challenges/", response_model=List[ChallengeRead])
 def read_challenges(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     challenges = db.query(Challenge).offset(skip).limit(limit).all()
     return challenges
+
 
 @app.get("/challenges/{challenge_id}", response_model=ChallengeRead)
 def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
@@ -217,8 +230,11 @@ def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="challenge not found")
     return db_challenge
 
+
 @app.put("/challenges/{challenge_id}", response_model=ChallengeRead)
-def update_challenge(challenge_id: int, ch_update: ChallengeUpdate, db: Session = Depends(get_db)):
+def update_challenge(
+    challenge_id: int, ch_update: ChallengeUpdate, db: Session = Depends(get_db)
+):
     db_challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="challenge not found")
@@ -238,7 +254,8 @@ def delete_challenge(challenge_id: int, db: Session = Depends(get_db)):
     db.commit()
     return db_ch
 
-#Resources
+
+# Resources
 @app.get("/resources/", response_model=List[ResourceRead])
 def read_resources(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     resources = db.query(Resource).offset(skip).limit(limit).all()
@@ -271,7 +288,9 @@ def get_resources(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
         .limit(limit)
         .all()
     )
-#User Badges
+
+
+# User Badges
 @app.get("/users/{user_id}/badges", response_model=List[BadgeRead])
 def get_user_badges(user_id: int, db: Session = Depends(get_db)):
     user_badges = (
@@ -283,6 +302,7 @@ def get_user_badges(user_id: int, db: Session = Depends(get_db)):
     if not user_badges:
         raise HTTPException(status_code=404, detail="No badges found for this user")
     return user_badges
+
 
 ### SECURITY and AUTHENTICATION
 def authenticate_user(
@@ -299,6 +319,7 @@ def authenticate_user(
         headers={"WWW-Authenticate": "Basic"},
     )
 
+
 @app.post("/login/", response_model=UserRead)
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
@@ -308,38 +329,11 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     return db_user
 
+
 @app.get("/protected", response_model=UserRead)
 def protected_route(user: User = Depends(authenticate_user)):
     return user
 
-# @app.post("/submit-code/", response_model=CodeSubmissionResult)
-# def submit_code(submission: CodeSubmission, db: Session = Depends(get_db)):
-#     db_challenge = db.query(challenge).filter(
-#         challenge.id == submission.challenge_id).first()
-#     if db_challenge is None:
-#         raise HTTPException(status_code=404, detail="Challenge not found")
-
-#     # Send code to Judge0 API for evaluation
-#     judge0_url = "https://api.judge0.com/submissions/?base64_encoded=false&wait=true"
-#     payload = {
-#         "source_code": submission.code,
-#         "language_id": get_language_id(db_challenge.language),
-#         "expected_output": db_challenge.output
-#     }
-#     headers = {"Content-Type": "application/json"}
-#     response = requests.post(judge0_url, json=payload, headers=headers)
-#     if response.status_code != 201:
-#         raise HTTPException(
-#             status_code=500, detail="Error communicating with Judge0 API")
-
-#     result = response.json()
-#     return CodeSubmissionResult(
-#         status=result["status"]["description"],
-#         stdout=result["stdout"],
-#         stderr=result["stderr"],
-#         expected_output=db_challenge.output,
-#         actual_output=result["stdout"]
-#     )
 
 def get_language_id(language: str) -> int:
     language_map = {
@@ -350,3 +344,60 @@ def get_language_id(language: str) -> int:
     }
     # Default to Python if language not found
     return language_map.get(language, 71)
+
+
+@app.post("/submit-code", response_model=CodeSubmissionResult)
+def submit_code(
+    submission: CodeSubmission,
+    db: Session = Depends(get_db),
+) -> CodeSubmissionResult:
+    db_challenge = (
+        db.query(Challenge).filter(Challenge.id == submission.challenge_id).first()
+    )
+    if db_challenge is None:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    try:
+        code_b64 = base64.b64encode(submission.source_code.encode("utf-8")).decode(
+            "utf-8"
+        )
+        input_b64 = base64.b64encode(db_challenge.input.encode("utf-8")).decode("utf-8")
+        output_b64 = base64.b64encode(db_challenge.output.encode("utf-8")).decode(
+            "utf-8"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Encoding Error: {e}")
+
+    create_submission = requests.post(
+        f"{JUDGE0_URL}/submissions?base64_encoded=true&wait=true",
+        headers={"X-RapidAPI-Key": RAPID_API_KEY},
+        json={
+            "source_code": code_b64,
+            "language_id": get_language_id(db_challenge.language),
+            "stdin": input_b64,
+            "expected_output": output_b64,
+        },
+    )
+
+    if create_submission.status_code not in [200, 201]:
+        raise HTTPException(
+            status_code=create_submission.status_code,
+            detail=f"Judge0 API Error: {create_submission.text}",
+        )
+
+    submission_token = create_submission.json().get("token")
+    if not submission_token:
+        raise HTTPException(status_code=500, detail="Submission token not received.")
+
+    result = requests.get(
+        f"{JUDGE0_URL}/submissions/{submission_token}?base64_encoded=false",
+        headers={"X-RapidAPI-Key": RAPID_API_KEY},
+    )
+
+    if result.status_code != 200:
+        raise HTTPException(
+            status_code=result.status_code,
+            detail=f"Error fetching results: {result.text}",
+        )
+
+    return result.json()
