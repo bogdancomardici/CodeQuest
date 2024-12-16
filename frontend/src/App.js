@@ -13,6 +13,8 @@ import LandingPage from "./components/landingpage/LandingPage";
 import { AuthProvider } from "./components/authentification/AuthContext";
 import PrivateRoute from "./components/authentification/PrivateRoute";
 import LoginPage from "./components/authentification/LoginPage";
+import SignUpPage from "./components/authentification/SignUpPage"; // Import the SignUpPage
+
 function App() {
   return (
     <div className="App">
@@ -21,6 +23,7 @@ function App() {
           <Navbar />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} /> {/* Add SignUpPage route */}
             <Route path="/" element={<LandingPage />} />
             <Route
               path="/dashboard"

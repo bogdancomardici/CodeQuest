@@ -32,6 +32,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const signUp = async ({ username, email, password }) => {
+    try {
+      const response = await axios.post("http://localhost:8000/users/", {
+        username,
+        email,
+        password,
+        role: "user",
+      });
+      setIsAuthenticated(true);
+      setUser(response.data);
+      navigate("/dashboard");
+    } catch (err) {
+      throw new Error("Failed to sign up");
+    }
+  };
+
   const logout = () => {
     setIsAuthenticated(false);
     setUser(null);
@@ -41,7 +57,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, signUp, logout }}>
       {children}
     </AuthContext.Provider>
   );
