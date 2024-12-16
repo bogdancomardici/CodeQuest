@@ -74,6 +74,19 @@ function NavBar() {
             </li>
           )}
           {user && (
+            <li className="nav-item">
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  isActive ? "nav-links active" : "nav-links"
+                }
+                onClick={handleClick}
+              >
+                Profile
+              </NavLink>
+            </li>
+          )}
+          {user && (
             <>
               <li className="nav-item">
                 <span className="nav-links">

@@ -76,6 +76,8 @@ def read_root():
     return {"Hello": "CodeQuest"}
 
 
+#Users
+
 @app.post("/users/", response_model=UserRead)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt())
@@ -140,16 +142,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
     return user
 
-
-@app.post("/login/", response_model=UserRead)
-def login_user(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.username == user.username).first()
-    if db_user is None or not bcrypt.checkpw(
-        user.password.encode("utf-8"), db_user.password.encode("utf-8")
-    ):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
-    return db_user
-
+#Badges
 
 @app.post("/badges/", response_model=BadgeRead)
 def create_badge(badge: BadgeCreate, db: Session = Depends(get_db)):
@@ -195,6 +188,7 @@ def delete_badge(badge_id: int, db: Session = Depends(get_db)):
     db.commit()
     return badge
 
+#Challenges
 
 @app.post("/challenges/", response_model=ChallengeRead)
 def create_challenge(ch_data: ChallengeCreate, db: Session = Depends(get_db)):
@@ -244,7 +238,7 @@ def delete_challenge(challenge_id: int, db: Session = Depends(get_db)):
     db.commit()
     return db_ch
 
-
+#Resources
 @app.get("/resources/", response_model=List[ResourceRead])
 def read_resources(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     resources = db.query(Resource).offset(skip).limit(limit).all()
@@ -277,7 +271,18 @@ def get_resources(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
         .limit(limit)
         .all()
     )
-
+#User Badges
+@app.get("/users/{user_id}/badges", response_model=List[BadgeRead])
+def get_user_badges(user_id: int, db: Session = Depends(get_db)):
+    user_badges = (
+        db.query(Badge)
+        .join(UserBadge, Badge.id == UserBadge.badge_id)
+        .filter(UserBadge.user_id == user_id)
+        .all()
+    )
+    if not user_badges:
+        raise HTTPException(status_code=404, detail="No badges found for this user")
+    return user_badges
 
 ### SECURITY and AUTHENTICATION
 def authenticate_user(
@@ -294,6 +299,14 @@ def authenticate_user(
         headers={"WWW-Authenticate": "Basic"},
     )
 
+@app.post("/login/", response_model=UserRead)
+def login_user(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if db_user is None or not bcrypt.checkpw(
+        user.password.encode("utf-8"), db_user.password.encode("utf-8")
+    ):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    return db_user
 
 @app.get("/protected", response_model=UserRead)
 def protected_route(user: User = Depends(authenticate_user)):
