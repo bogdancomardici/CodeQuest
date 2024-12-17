@@ -12,7 +12,7 @@ from models import (
     Friend,
     Resource,
     UserBadge,
-    Userchallenge,
+    UserChallenge,
 )
 from schemas import (
     UserCreate,
@@ -87,7 +87,8 @@ def read_root():
 
 @app.post("/users/", response_model=UserRead)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt())
+    hashed_password = bcrypt.hashpw(
+        user.password.encode("utf-8"), bcrypt.gensalt())
     db_user = User(
         username=user.username,
         email=user.email,
@@ -111,7 +112,8 @@ def get_users_ordered_by_points(
     skip: int = 0, limit: int = 5, db: Session = Depends(get_db)
 ):
     db_users = (
-        db.query(User).order_by(User.score.desc()).offset(skip).limit(limit).all()
+        db.query(User).order_by(User.score.desc()
+                                ).offset(skip).limit(limit).all()
     )
     return db_users
 
@@ -149,6 +151,25 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
     return user
 
+
+@app.post("/users/{user_id}/badges/{badge_id}", response_model=UserRead)
+def assign_badge_to_user(user_id: int, badge_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    badge = db.query(Badge).filter(Badge.id == badge_id).first()
+    if user is None or badge is None:
+        raise HTTPException(status_code=404, detail="User or Badge not found")
+    user.badges.append(badge)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@app.get("/users/{user_id}/badges", response_model=List[BadgeRead])
+def get_user_badges(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user.badges
 
 # Badges
 
@@ -225,7 +246,8 @@ def read_challenges(skip: int = 0, limit: int = 10, db: Session = Depends(get_db
 
 @app.get("/challenges/{challenge_id}", response_model=ChallengeRead)
 def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
-    db_challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
+    db_challenge = db.query(Challenge).filter(
+        Challenge.id == challenge_id).first()
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="challenge not found")
     return db_challenge
@@ -235,7 +257,8 @@ def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
 def update_challenge(
     challenge_id: int, ch_update: ChallengeUpdate, db: Session = Depends(get_db)
 ):
-    db_challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
+    db_challenge = db.query(Challenge).filter(
+        Challenge.id == challenge_id).first()
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="challenge not found")
     for key, value in ch_update.dict(exclude_unset=True).items():
@@ -264,7 +287,8 @@ def read_resources(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
 
 @app.post("/resources/", response_model=ResourceRead)
 def create_resource(resource: ResourceCreate, db: Session = Depends(get_db)):
-    db_resource = Resource(title=resource.title, description=resource.description)
+    db_resource = Resource(title=resource.title,
+                           description=resource.description)
     db.add(db_resource)
     db.commit()
     db.refresh(db_resource)
@@ -290,7 +314,7 @@ def get_resources(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
     )
 
 
-#User Badges
+# User Badges
 @app.get("/users/{user_id}/badges", response_model=List[BadgeRead])
 def get_user_badges(user_id: int, db: Session = Depends(get_db)):
     user_badges = (
@@ -300,11 +324,12 @@ def get_user_badges(user_id: int, db: Session = Depends(get_db)):
         .all()
     )
     if not user_badges:
-        raise HTTPException(status_code=404, detail="No badges found for this user")
+        raise HTTPException(
+            status_code=404, detail="No badges found for this user")
     return user_badges
 
 
-### SECURITY and AUTHENTICATION
+# SECURITY and AUTHENTICATION
 def authenticate_user(
     credentials: HTTPBasicCredentials = Depends(security), db: Session = Depends(get_db)
 ):
@@ -326,7 +351,8 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     if db_user is None or not bcrypt.checkpw(
         user.password.encode("utf-8"), db_user.password.encode("utf-8")
     ):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(
+            status_code=401, detail="Invalid username or password")
     return db_user
 
 
@@ -350,7 +376,8 @@ def submit_code(
     db: Session = Depends(get_db),
 ) -> CodeSubmissionResult:
     db_challenge = (
-        db.query(Challenge).filter(Challenge.id == submission.challenge_id).first()
+        db.query(Challenge).filter(Challenge.id ==
+                                   submission.challenge_id).first()
     )
     print("Received Submission:", submission.dict())
     if db_challenge is None:
@@ -360,7 +387,8 @@ def submit_code(
         code_b64 = base64.b64encode(submission.source_code.encode("utf-8")).decode(
             "utf-8"
         )
-        input_b64 = base64.b64encode(db_challenge.input.encode("utf-8")).decode("utf-8")
+        input_b64 = base64.b64encode(
+            db_challenge.input.encode("utf-8")).decode("utf-8")
         output_b64 = base64.b64encode(db_challenge.output.encode("utf-8")).decode(
             "utf-8"
         )
@@ -386,7 +414,8 @@ def submit_code(
 
     submission_token = create_submission.json().get("token")
     if not submission_token:
-        raise HTTPException(status_code=500, detail="Submission token not received.")
+        raise HTTPException(
+            status_code=500, detail="Submission token not received.")
 
     result = requests.get(
         f"{JUDGE0_URL}/submissions/{submission_token}?base64_encoded=false",

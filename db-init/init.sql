@@ -71,7 +71,7 @@ DROP TABLE IF EXISTS "userbadge";
 CREATE TABLE "public"."userbadge" (
     "user_id" integer NOT NULL,
     "badge_id" integer NOT NULL,
-    CONSTRAINT "friends_pkey" PRIMARY KEY ("user_id", "badge_id")
+    CONSTRAINT "userbadge_pkey" PRIMARY KEY ("user_id", "badge_id")
 ) WITH (oids = false);
 
 
@@ -102,8 +102,8 @@ CREATE TABLE "public"."users" (
 ALTER TABLE ONLY "public"."friends" ADD CONSTRAINT "friend_user_id1_fkey" FOREIGN KEY (user_id1) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 ALTER TABLE ONLY "public"."friends" ADD CONSTRAINT "friend_user_id2_fkey" FOREIGN KEY (user_id2) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 
-ALTER TABLE ONLY "public"."userbadge" ADD CONSTRAINT "friends_badge_id_fkey" FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE NOT DEFERRABLE;
-ALTER TABLE ONLY "public"."userbadge" ADD CONSTRAINT "friends_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE ONLY "public"."userbadge" ADD CONSTRAINT "userbadge_badge_id_fkey" FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE ONLY "public"."userbadge" ADD CONSTRAINT "userbadge_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 
 ALTER TABLE ONLY "public"."userchallenge" ADD CONSTRAINT "userchallenge_challenge_id_fkey" FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE NOT DEFERRABLE;
 ALTER TABLE ONLY "public"."userchallenge" ADD CONSTRAINT "userchallenge_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;

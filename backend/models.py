@@ -1,8 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Sequence
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy import Column, Integer, String, DateTime, func
-from sqlalchemy.ext.declarative import declarative_base
 
 import os
 
@@ -27,6 +25,8 @@ class User(Base):
     password = Column(String)
     role = Column(String)
     score = Column(Integer, default=0)
+    badges = relationship("Badge", secondary="userbadge",
+                          back_populates="users")
 
 
 class Badge(Base):
@@ -35,6 +35,8 @@ class Badge(Base):
                 primary_key=True, index=True)
     title = Column(String, unique=True, index=True)
     description = Column(String)
+    users = relationship("User", secondary="userbadge",
+                         back_populates="badges")
 
 
 class Challenge(Base):
@@ -46,7 +48,6 @@ class Challenge(Base):
     output = Column(String)
     difficulty = Column(String)
     language = Column(String)
-
 
 
 class Friend(Base):
@@ -69,7 +70,7 @@ class UserBadge(Base):
     badge_id = Column(Integer, ForeignKey('badges.id'), primary_key=True)
 
 
-class Userchallenge(Base):
+class UserChallenge(Base):
     __tablename__ = "userchallenge"
     user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     challenge_id = Column(Integer, ForeignKey(
