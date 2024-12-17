@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getResourcesWithPagination } from "../../api/resources";
-
 import "./resources.css";
 
 function Resources() {
@@ -15,14 +14,20 @@ function Resources() {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const data = await getResourcesWithPagination(page * 6, 6);
-        setResources(data);
+        const data = await getResourcesWithPagination(page * 5, 5);
 
-        if (data.length < 6) {
-          setIsLastPage(true);
-        } else {
-          setIsLastPage(false);
-        }
+        const filledData = [...data];
+        while (filledData.length < 5) {
+          filledData.push({
+            id: `placeholder-${filledData.length}`,
+            title: "",
+            description: "",
+            isPlaceholder: true,
+          });
+        } 
+
+        setResources(filledData);
+        setIsLastPage(data.length < 5); 
       } catch (error) {
         console.error("Error fetching resources:", error);
       }
@@ -41,12 +46,10 @@ function Resources() {
   }, [searchTerm, resources]);
 
   const handleExploreClick = (id) => {
-    navigate(`/resource/${id}`);
+    if (!id.startsWith("placeholder")) {
+      navigate(`/resource/${id}`);
+    }
   };
-
-  const placeholders = Array.from({
-    length: Math.max(6 - filteredResources.length, 0),
-  });
 
   return (
     <div className="resources-container">
@@ -67,23 +70,24 @@ function Resources() {
             <div className="list-container-resources">
               <ul className="list-resources">
                 {filteredResources.map((resource) => (
-                  <li key={resource.id} className="list-item-resources">
-                    <span>{resource.title}</span>
-                    <div className="button-container-resources">
-                      <button
-                        className="button-resources explore-button"
-                        onClick={() => handleExploreClick(resource.id)}
-                      >
-                        Explore
-                      </button>
-                    </div>
-                  </li>
-                ))}
-                {placeholders.map((_, index) => (
                   <li
-                    key={`placeholder-${index}`}
-                    className="list-item-placeholder"
-                  ></li>
+                    key={resource.id}
+                    className={`list-item-resources ${
+                      resource.isPlaceholder ? "placeholder" : ""
+                    }`}
+                  >
+                    <span>{resource.title}</span>
+                    {!resource.isPlaceholder && (
+                      <div className="button-container-resources">
+                        <button
+                          className="button-resources explore-button"
+                          onClick={() => handleExploreClick(resource.id)}
+                        >
+                          Explore
+                        </button>
+                      </div>
+                    )}
+                  </li>
                 ))}
               </ul>
               <div className="pagination-controls">

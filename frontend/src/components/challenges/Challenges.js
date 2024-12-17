@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getChallengesWithPagination } from "../../api/challenges";
-
+import { getChallengesWithPagination, addChallenge } from "../../api/challenges";
+import { useAuth } from "../authentification/AuthContext";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
 import "./challenges.css";
 
 function Challenges() {
@@ -10,43 +13,70 @@ function Challenges() {
   const [filteredChallenges, setFilteredChallenges] = useState([]);
   const [page, setPage] = useState(0);
   const [isLastPage, setIsLastPage] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [newChallenge, setNewChallenge] = useState({
+    title: "",
+    description: "",
+    input: "",
+    output: "",
+    difficulty: "",
+    language: "",
+  });
+
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchChallenges = async () => {
       try {
-        const data = await getChallengesWithPagination(page * 6, 6);
+        const data = await getChallengesWithPagination(page * 5, 5);
         setChallenges(data);
-
-        if (data.length < 6) {
-          setIsLastPage(true);
-        } else {
-          setIsLastPage(false);
-        }
+        setIsLastPage(data.length < 5);
       } catch (error) {
         console.error("Error fetching challenges:", error);
       }
     };
-
     fetchChallenges();
   }, [page]);
 
   useEffect(() => {
-    const filtered = challenges.filter((challenge) =>
-      challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      challenge.difficulty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      challenge.language.toLowerCase().includes(searchTerm.toLowerCase())
+    setFilteredChallenges(
+      challenges.filter(
+        (challenge) =>
+          challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          challenge.difficulty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          challenge.language.toLowerCase().includes(searchTerm.toLowerCase())
+      )
     );
-    setFilteredChallenges(filtered);
   }, [searchTerm, challenges]);
 
-  const handleSoloChallengeClick = (id) => {
-    navigate(`/soloChallenge/${id}`);
-  };
+  const handleAddChallenge = async () => {
+    const challengeToSubmit = {
+      title: newChallenge.title,
+      description: newChallenge.description,
+      input: newChallenge.input,
+      output: newChallenge.output,
+      difficulty: newChallenge.difficulty,
+      language: newChallenge.language,
+    };
 
-  const placeholders = Array.from({
-    length: Math.max(6 - filteredChallenges.length, 0),
-  });
+    try {
+      await addChallenge(challengeToSubmit);
+      console.log("Challenge added successfully!");
+      setShowModal(false);
+      setNewChallenge({
+        title: "",
+        description: "",
+        input: "",
+        output: "",
+        difficulty: "",
+        language: "",
+      });
+      setPage(0);
+    } catch (error) {
+      console.error("Error adding challenge:", error);
+    }
+  };
 
   return (
     <div className="challenges-container">
@@ -74,7 +104,7 @@ function Challenges() {
                     <div className="button-container-challenges">
                       <button
                         className="button-challenges solo-button"
-                        onClick={() => handleSoloChallengeClick(challenge.id)}
+                        onClick={() => navigate(`/soloChallenge/${challenge.id}`)}
                       >
                         Solo Challenge
                       </button>
@@ -83,12 +113,6 @@ function Challenges() {
                       </button>
                     </div>
                   </li>
-                ))}
-                {placeholders.map((_, index) => (
-                  <li
-                    key={`placeholder-${index}`}
-                    className="list-item-placeholder"
-                  ></li>
                 ))}
               </ul>
               <div className="pagination-controls">
@@ -108,10 +132,111 @@ function Challenges() {
                 </button>
               </div>
             </div>
+
+            {user && user.role === "admin" && (
+              <div>
+                <button onClick={() => setShowModal(true)} className="button-add">
+                  Add Challenge
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="grid-item-challenges invisible-challenges"></div>
       </div>
+
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Add New Challenge</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group>
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter title"
+                value={newChallenge.title}
+                onChange={(e) =>
+                  setNewChallenge({ ...newChallenge, title: e.target.value })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                placeholder="Enter description"
+                value={newChallenge.description}
+                onChange={(e) =>
+                  setNewChallenge({ ...newChallenge, description: e.target.value })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Input</Form.Label>
+              <Form.Control
+                as="textarea"
+                placeholder="Enter input"
+                value={newChallenge.input}
+                onChange={(e) =>
+                  setNewChallenge({ ...newChallenge, input: e.target.value })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Output</Form.Label>
+              <Form.Control
+                as="textarea"
+                placeholder="Enter output"
+                value={newChallenge.output}
+                onChange={(e) =>
+                  setNewChallenge({ ...newChallenge, output: e.target.value })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Difficulty</Form.Label>
+              <Form.Control
+                as="select"
+                value={newChallenge.difficulty}
+                onChange={(e) =>
+                  setNewChallenge({ ...newChallenge, difficulty: e.target.value })
+                }
+              >
+                <option value="">Select Difficulty</option>
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </Form.Control>
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Language</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter language"
+                value={newChallenge.language}
+                onChange={(e) =>
+                  setNewChallenge({ ...newChallenge, language: e.target.value })
+                }
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleAddChallenge}>
+            Add Challenge
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

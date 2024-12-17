@@ -14,7 +14,7 @@ function NavBar() {
       <div className="nav-container">
         <NavLink to="/" className="nav-logo">
           <img
-            src="/logo_cq.png" // Public folder path
+            src="/logo_cq.png"
             alt="CodeQuest Logo"
             className="nav-logo-image"
           />
