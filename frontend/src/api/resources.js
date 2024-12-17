@@ -29,3 +29,13 @@ export const getResourcesWithPagination = async (skip = 0, limit = 5) => {
     throw error;
   }
 };
+
+export const addResources = async (newResource) => {
+  try {
+    const response = await api.post("/resources/", newResource);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding resource:", error);
+    throw error;
+  }
+};

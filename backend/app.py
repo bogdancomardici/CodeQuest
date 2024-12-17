@@ -290,7 +290,7 @@ def get_resources(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
     )
 
 
-# User Badges
+#User Badges
 @app.get("/users/{user_id}/badges", response_model=List[BadgeRead])
 def get_user_badges(user_id: int, db: Session = Depends(get_db)):
     user_badges = (
@@ -340,9 +340,7 @@ def get_language_id(language: str) -> int:
         "Python": 71,
         "JavaScript": 63,
         "Go": 60,
-        # Add other languages and their corresponding Judge0 language IDs here
     }
-    # Default to Python if language not found
     return language_map.get(language, 71)
 
 
@@ -354,6 +352,7 @@ def submit_code(
     db_challenge = (
         db.query(Challenge).filter(Challenge.id == submission.challenge_id).first()
     )
+    print("Received Submission:", submission.dict())
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="Challenge not found")
 

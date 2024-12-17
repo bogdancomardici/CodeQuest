@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getResourcesWithPagination } from "../../api/resources";
+import { addResources, getResourcesWithPagination } from "../../api/resources";
+import { useAuth } from "../authentification/AuthContext";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
 import "./resources.css";
 
 function Resources() {
@@ -10,6 +14,13 @@ function Resources() {
   const [page, setPage] = useState(0);
   const [isLastPage, setIsLastPage] = useState(false);
   const navigate = useNavigate();
+  const [newResoruce, setNewResource] = useState({
+    title: "",
+    description: "",
+  });
+  const [showModal, setShowModal] = useState(false);
+  const { user } = useAuth();
+
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -46,10 +57,29 @@ function Resources() {
   }, [searchTerm, resources]);
 
   const handleExploreClick = (id) => {
-    if (!id.startsWith("placeholder")) {
-      navigate(`/resource/${id}`);
-    }
+    navigate(`/resource/${id}`);
   };
+
+
+  const handleAddResource = async () => {
+      const resourceToSubmit = {
+        title: newResoruce.title,
+        description: newResoruce.description,
+      };
+  
+      try {
+        await addResources(resourceToSubmit);
+        console.log("Resource added successfully!");
+        setShowModal(false);
+        setNewResource({
+          title: "",
+          description: "",
+        });
+        setPage(0);
+      } catch (error) {
+        console.error("Error adding resources:", error);
+      }
+    };
 
   return (
     <div className="resources-container">
@@ -107,10 +137,57 @@ function Resources() {
                 </button>
               </div>
             </div>
+            {user && user.role === "admin" && (
+              <div>
+                <button onClick={() => setShowModal(true)} className="button-add">
+                  Add Challenge
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="grid-item-resources invisible-resources"></div>
       </div>
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Add New Resource</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group>
+              <Form.Label>Resource</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter title"
+                value={newResoruce.title}
+                onChange={(e) =>
+                  setNewResource({ ...newResoruce, title: e.target.value })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                placeholder="Enter description"
+                value={newResoruce.description}
+                onChange={(e) =>
+                  setNewResource({ ...newResoruce, description: e.target.value })
+                }
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleAddResource}>
+            Add Resource
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

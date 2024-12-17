@@ -10,15 +10,14 @@ function SoloChallenge() {
   const [error, setError] = useState(null);
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [code, setCode] = useState(
-    "public class Main{\npublic static int main(String[] args){ \nreturn 1; \n} \n}"
-  );
-
+  const [code, setCode] = useState("");
+  const [output, setOutput] = useState("");
   useEffect(() => {
     const fetchChallenge = async () => {
       try {
         const challengeData = await getChallenge(id);
         setChallenge(challengeData);
+        setCode(getTextStart(challengeData.language));
         setLoading(false);
       } catch (err) {
         console.error("Failed to fetch challenge:", err);
@@ -33,27 +32,31 @@ function SoloChallenge() {
   useEffect(() => {
     let timer;
     if (isRunning) {
-      timer = setInterval(() => {
-        setTime((prevTime) => prevTime + 1);
-      }, 1000);
+      timer = setInterval(() => setTime((prevTime) => prevTime + 1), 1000);
     }
     return () => clearInterval(timer);
   }, [isRunning]);
 
-  const toggleTimer = () => {
-    setIsRunning((prev) => !prev);
-  };
+  const toggleTimer = () => setIsRunning((prev) => !prev);
 
   const handleSubmit = async () => {
+    const challengeId = parseInt(id, 10);
     try {
-      const result = await submitCode(id, code);
-      alert(`Code submitted! Status: ${result.status}`);
+      const result = await submitCode(challengeId, code); 
+       console.log("API Response:", result);
+  
+      if (result?.stdout) {
+        setOutput(result.stdout);
+      } else {
+        setOutput("No output or an error occurred.");
+      }
     } catch (error) {
       console.error("Error submitting code:", error);
-      alert("Error submitting code.");
+      alert(error.response?.data?.detail || "Submission failed.");
+      setOutput("Error submitting code.");
     }
   };
-
+  
   const formatTime = () => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
@@ -62,91 +65,33 @@ function SoloChallenge() {
       .padStart(2, "0")}`;
   };
 
-  if (loading) {
-    return <div className="solo-challenge-container">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="solo-challenge-container">{error}</div>;
-  }
-
-  const getTextStart = (language) =>{
-    let returnString = "";
-    console.log("Return string" + returnString)
-    console.log(language + " Lang")
-
-    console.log(    language.toUpperCase()
-      + " Lang")
-    switch(language.toUpperCase()){
+  const getTextStart = (language) => {
+    switch (language?.toUpperCase()) {
       case "JAVA":
-        returnString = "public class Main {\n" +
-        "    public static void main(String[] args) {\n" +
-        "        // Write your code here\n" +
-        "    }\n" +
-        "}";
-        return returnString
+        return `public class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}`;
       case "PYTHON":
-        console.log(returnString)
-        returnString = "def main():\n" +
-        "    # Write your code here\n" +
-        "\n" +
-        "if __name__ == \"__main__\":\n" +
-        "    main()";
-        return returnString
-        
-      case "GO":
-        returnString = "package main\n" +
-        "\n" +
-        "import \"fmt\"\n" +
-        "\n" +
-        "func main() {\n" +
-        "    // Write your code here\n" +
-        "}";
-        return returnString
-      case "C":
-        returnString = "#include <stdio.h>\n" +
-        "\n" +
-        "int main() {\n" +
-        "    // Write your code here\n" +
-        "    return 0;\n" +
-        "}";
-        return returnString
-
+        return `def main():\n    # Write your code here\n\nif __name__ == "__main__":\n    main()`;
       case "C++":
-        returnString = "#include <iostream>\n" +
-        "\n" +
-        "int main() {\n" +
-        "    // Write your code here\n" +
-        "    return 0;\n" +
-        "}";
-        return returnString
+        return `#include <iostream>\n\nint main() {\n    // Write your code here\n    return 0;\n}`;
       case "JAVASCRIPT":
-        returnString = "function main() {\n" +
-        "    // Write your code here\n" +
-        "}\n" +
-        "\n" +
-        "main();";
-        return returnString
-      default :
-        returnString = "Will be implemented"
-        return returnString
+        return `function main() {\n    // Write your code here\n}\n\nmain();`;
+      default:
+        return "// Start coding here...";
     }
-  }
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+
   return (
     <div className="solo-challenge-container">
       <div className="grid-layout-solo">
         <div className="grid-item-solo left-solo">
           <div className="card-solo">
             <h3>Challenge Details</h3>
-            <p>
-              <strong>Difficulty:</strong> {challenge.difficulty}
-            </p>
-            <p>
-              <strong>Language:</strong> {challenge.language}
-            </p>
-            <p>
-              <strong>Description:</strong> {challenge.description}
-            </p>
+            <p><strong>Difficulty:</strong> {challenge.difficulty}</p>
+            <p><strong>Language:</strong> {challenge.language}</p>
+            <p><strong>Description:</strong> {challenge.description}</p>
           </div>
         </div>
         <div className="grid-item-solo right-solo">
@@ -161,19 +106,23 @@ function SoloChallenge() {
               {isRunning ? "Pause" : "Start"}
             </button>
             <p className="timer-time">{formatTime()}</p>
-            <button onClick={handleSubmit}  className="submit-button">
+            <button onClick={handleSubmit} className="submit-button">
               Submit
             </button>
           </div>
 
           <textarea
-            name="postContent"
-            defaultValue = {getTextStart(challenge.language)}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             rows={20}
             cols={80}
           />
+          {output && (
+            <div className="output-container">
+              <h3>Output:</h3>
+              <pre>{output}</pre>
+            </div>
+          )}
         </div>
       </div>
     </div>
