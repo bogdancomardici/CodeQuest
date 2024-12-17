@@ -20,11 +20,22 @@ export const getChallenge = async (id) => {
   }
 };
 
-export const submitCode = async (challengeId, code) => {
+export const submitCode = async (
+  challengeId,
+  sourceCode,
+  languageId,
+  stdin,
+  expectedOutput,
+  user_id
+) => {
   try {
-    const response = await api.post("/submit-code/", {
+    const response = await api.post("/submit-code", {
       challenge_id: challengeId,
-      code: code,
+      source_code: sourceCode,
+      language_id: languageId,
+      stdin: stdin,
+      expected_output: expectedOutput,
+      user_id: user_id,
     });
     return response.data;
   } catch (error) {

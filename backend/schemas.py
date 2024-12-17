@@ -105,6 +105,10 @@ class ResourceUpdate(BaseModel):
 class CodeSubmission(BaseModel):
     source_code: str
     challenge_id: int
+    language_id: int
+    stdin: str
+    expected_output: str
+    user_id: int
 
 
 # {
@@ -128,11 +132,14 @@ class CodeSubmissionStatus(BaseModel):
 
 
 class CodeSubmissionResult(BaseModel):
-    stdout: Optional[str]
-    time: Optional[str]
-    memory: int
-    stderr: Optional[str]
-    token: str
-    compile_output: Optional[str]
-    message: Optional[str]
     status: CodeSubmissionStatus
+    stdout: str
+    stderr: str = ""
+    expected_output: str
+    actual_output: str
+    time: str
+    memory: int
+    token: str
+    compile_output: str = ""
+    message: str = ""
+    points_awarded: int = 0

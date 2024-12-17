@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "./solochallenge.css";
 import { getChallenge, submitCode } from "../../api/challenges";
+import { useAuth } from "../authentification/AuthContext";
 
 function SoloChallenge() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [challenge, setChallenge] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,6 +14,7 @@ function SoloChallenge() {
   const [isRunning, setIsRunning] = useState(false);
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
+
   useEffect(() => {
     const fetchChallenge = async () => {
       try {
@@ -41,12 +44,28 @@ function SoloChallenge() {
 
   const handleSubmit = async () => {
     const challengeId = parseInt(id, 10);
+    const languageId = getLanguageId(challenge.language);
+    const stdin = challenge.input;
+    const expectedOutput = challenge.output;
+
     try {
-      const result = await submitCode(challengeId, code); 
-       console.log("API Response:", result);
-  
+      const result = await submitCode(
+        challengeId,
+        code,
+        languageId,
+        stdin,
+        expectedOutput,
+        user.id // Pass the user ID
+      );
+      console.log("API Response:", result);
+
       if (result?.stdout) {
         setOutput(result.stdout);
+        if (result.points_awarded) {
+          alert(
+            `Congratulations! You have been awarded ${result.points_awarded} points.`
+          );
+        }
       } else {
         setOutput("No output or an error occurred.");
       }
@@ -56,7 +75,7 @@ function SoloChallenge() {
       setOutput("Error submitting code.");
     }
   };
-  
+
   const formatTime = () => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
@@ -80,6 +99,21 @@ function SoloChallenge() {
     }
   };
 
+  const getLanguageId = (language) => {
+    switch (language?.toUpperCase()) {
+      case "PYTHON":
+        return 71;
+      case "JAVASCRIPT":
+        return 63;
+      case "JAVA":
+        return 62;
+      case "C++":
+        return 54;
+      default:
+        return 71; // Default to Python
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
@@ -89,9 +123,15 @@ function SoloChallenge() {
         <div className="grid-item-solo left-solo">
           <div className="card-solo">
             <h3>Challenge Details</h3>
-            <p><strong>Difficulty:</strong> {challenge.difficulty}</p>
-            <p><strong>Language:</strong> {challenge.language}</p>
-            <p><strong>Description:</strong> {challenge.description}</p>
+            <p>
+              <strong>Difficulty:</strong> {challenge.difficulty}
+            </p>
+            <p>
+              <strong>Language:</strong> {challenge.language}
+            </p>
+            <p>
+              <strong>Description:</strong> {challenge.description}
+            </p>
           </div>
         </div>
         <div className="grid-item-solo right-solo">

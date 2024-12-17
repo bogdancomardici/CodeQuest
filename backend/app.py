@@ -15,6 +15,7 @@ from models import (
     UserChallenge,
 )
 from schemas import (
+    CodeSubmissionStatus,
     UserCreate,
     UserRead,
     UserUpdate,
@@ -384,14 +385,12 @@ def submit_code(
         raise HTTPException(status_code=404, detail="Challenge not found")
 
     try:
-        code_b64 = base64.b64encode(submission.source_code.encode("utf-8")).decode(
-            "utf-8"
-        )
+        code_b64 = base64.b64encode(
+            submission.source_code.encode("utf-8")).decode("utf-8")
         input_b64 = base64.b64encode(
             db_challenge.input.encode("utf-8")).decode("utf-8")
-        output_b64 = base64.b64encode(db_challenge.output.encode("utf-8")).decode(
-            "utf-8"
-        )
+        output_b64 = base64.b64encode(
+            db_challenge.output.encode("utf-8")).decode("utf-8")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Encoding Error: {e}")
 
@@ -415,7 +414,8 @@ def submit_code(
     submission_token = create_submission.json().get("token")
     if not submission_token:
         raise HTTPException(
-            status_code=500, detail="Submission token not received.")
+            status_code=500, detail="Submission token not received."
+        )
 
     result = requests.get(
         f"{JUDGE0_URL}/submissions/{submission_token}?base64_encoded=false",
@@ -428,4 +428,39 @@ def submit_code(
             detail=f"Error fetching results: {result.text}",
         )
 
-    return result.json()
+    result_data = result.json()
+
+    # Check for compilation or runtime errors
+    if result_data["status"]["id"] != 3:  # Status ID 3 means "Accepted"
+        error_message = base64.b64decode(
+            result_data.get("message", "")).decode("utf-8")
+        stderr = base64.b64decode(
+            result_data.get("stderr", "")).decode("utf-8")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error: {result_data['status']['description']}\nMessage: {error_message}\nStderr: {stderr}"
+        )
+
+    # Update user score based on problem difficulty
+    user = db.query(User).filter(User.id == submission.user_id).first()
+    points_awarded = 0
+    if user:
+        points_awarded = 20 if db_challenge.difficulty == "Easy" else 40 if db_challenge.difficulty == "Medium" else 60
+        user.score += points_awarded
+        db.commit()
+        print(
+            f"User {user.id} score updated: {user.score}. Points awarded: {points_awarded}")
+
+    return {
+        "status": CodeSubmissionStatus(id=result_data["status"]["id"], description=result_data["status"]["description"]),
+        "stdout": result_data.get("stdout", ""),
+        "stderr": result_data.get("stderr", "") or "",
+        "expected_output": db_challenge.output,
+        "actual_output": result_data.get("stdout", ""),
+        "time": result_data.get("time", ""),
+        "memory": result_data.get("memory", 0),
+        "token": submission_token,
+        "compile_output": result_data.get("compile_output", "") or "",
+        "message": result_data.get("message", "") or "",
+        "points_awarded": points_awarded  # Include points_awarded in the response
+    }
