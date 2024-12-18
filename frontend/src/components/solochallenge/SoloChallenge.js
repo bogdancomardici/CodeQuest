@@ -62,9 +62,12 @@ function SoloChallenge() {
       if (result?.stdout) {
         setOutput(result.stdout);
         if (result.points_awarded) {
+          const timeTaken = formatTime();
           alert(
-            `Congratulations! You have been awarded ${result.points_awarded} points.`
+            `Congratulations! You have solved the problem in ${timeTaken} and have been awarded ${result.points_awarded} points.`
           );
+          setTime(0); // Reset the timer
+          setIsRunning(false); // Stop the timer
         }
       } else {
         setOutput("No output or an error occurred.");
@@ -156,6 +159,8 @@ function SoloChallenge() {
             onChange={(e) => setCode(e.target.value)}
             rows={20}
             cols={80}
+            disabled={!isRunning} // Disable textarea when timer is not running
+            className={!isRunning ? "textarea-disabled" : ""} // Apply CSS class when disabled
           />
           {output && (
             <div className="output-container">
