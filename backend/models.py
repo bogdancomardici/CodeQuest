@@ -14,6 +14,7 @@ badge_id_seq = Sequence('badge_id_seq')
 challenge_id_seq = Sequence('challenge_id_seq')
 resource_id_seq = Sequence('resource_id_seq')
 users_id_seq = Sequence('users_id_seq')
+tag_id_seq = Sequence('tag_id_seq')
 
 
 class User(Base):
@@ -48,12 +49,25 @@ class Challenge(Base):
     output = Column(String)
     difficulty = Column(String)
     language = Column(String)
+    tags = relationship("Tag", secondary="challengetag",
+                        back_populates="challenges")
 
 
-class Friend(Base):
-    __tablename__ = "friends"
-    user_id1 = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    user_id2 = Column(Integer, ForeignKey('users.id'), primary_key=True)
+class Tag(Base):
+    __tablename__ = "tags"
+    id = Column(Integer, Sequence('tag_id_seq'), primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    challenges = relationship(
+        "Challenge", secondary="challengetag", back_populates="tags")
+    resources = relationship(
+        "Resource", secondary="resourcetag", back_populates="tags")
+
+
+class ChallengeTag(Base):
+    __tablename__ = "challengetag"
+    challenge_id = Column(Integer, ForeignKey(
+        'challenges.id'), primary_key=True)
+    tag_id = Column(Integer, ForeignKey('tags.id'), primary_key=True)
 
 
 class Resource(Base):
@@ -62,6 +76,21 @@ class Resource(Base):
                 primary_key=True, index=True)
     title = Column(String, unique=True, index=True)
     description = Column(String)
+    tags = relationship("Tag", secondary="resourcetag",
+                        back_populates="resources")
+
+
+class ResourceTag(Base):
+    __tablename__ = "resourcetag"
+    resource_id = Column(Integer, ForeignKey(
+        'resources.id'), primary_key=True)
+    tag_id = Column(Integer, ForeignKey('tags.id'), primary_key=True)
+
+
+class Friend(Base):
+    __tablename__ = "friends"
+    user_id1 = Column(Integer, ForeignKey('users.id'), primary_key=True)
+    user_id2 = Column(Integer, ForeignKey('users.id'), primary_key=True)
 
 
 class UserBadge(Base):

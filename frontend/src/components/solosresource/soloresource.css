@@ -23,4 +23,5 @@
 .soloresource-card p {
   font-size: 1.2rem;
   color: #555;
+  white-space: pre-wrap;
 }

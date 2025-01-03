@@ -4,6 +4,7 @@ from typing import List
 from sqlalchemy.orm import Session
 from models import (
     Base,
+    ResourceTag,
     engine,
     SessionLocal,
     User,
@@ -444,12 +445,27 @@ def submit_code(
     # Update user score based on problem difficulty
     user = db.query(User).filter(User.id == submission.user_id).first()
     points_awarded = 0
+    badge_awarded = None
     if user:
-        points_awarded = 20 if db_challenge.difficulty == "Easy" else 40 if db_challenge.difficulty == "Medium" else 60
+        initial_score = user.score
+        points_awarded = 10 if db_challenge.difficulty == "Easy" else 20 if db_challenge.difficulty == "Medium" else 40
         user.score += points_awarded
         db.commit()
         print(
             f"User {user.id} score updated: {user.score}. Points awarded: {points_awarded}")
+
+        # Assign a badge if the user's score was 0 before the update
+        if initial_score == 0:
+            first_problem_badge = db.query(Badge).filter(
+                Badge.title == "Beginner Badge").first()
+            if first_problem_badge:
+                user_badge = UserBadge(
+                    user_id=user.id, badge_id=first_problem_badge.id)
+                db.add(user_badge)
+                db.commit()
+                badge_awarded = first_problem_badge.title
+                print(
+                    f"User {user.id} awarded badge: {first_problem_badge.title}")
 
     return {
         "status": CodeSubmissionStatus(id=result_data["status"]["id"], description=result_data["status"]["description"]),
@@ -462,5 +478,19 @@ def submit_code(
         "token": submission_token,
         "compile_output": result_data.get("compile_output", "") or "",
         "message": result_data.get("message", "") or "",
-        "points_awarded": points_awarded  # Include points_awarded in the response
+        "points_awarded": points_awarded,  # Include points_awarded in the response
+        "badge_awarded": badge_awarded  # Include badge_awarded in the response
     }
+
+
+@app.get("/challenges/{challenge_id}/recommended-resources", response_model=List[ResourceRead])
+def get_recommended_resources(challenge_id: int, db: Session = Depends(get_db)):
+    db_challenge = db.query(Challenge).filter(
+        Challenge.id == challenge_id).first()
+    if db_challenge is None:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    tag_ids = [tag.id for tag in db_challenge.tags]
+    recommended_resources = db.query(Resource).join(
+        ResourceTag).filter(ResourceTag.tag_id.in_(tag_ids)).all()
+    return recommended_resources

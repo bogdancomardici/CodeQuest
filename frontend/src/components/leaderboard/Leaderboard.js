@@ -68,13 +68,18 @@ function Leaderboard() {
             </div>
             <div className="list-container-leaderboard">
               <ul className="list-leaderboard">
-                {filteredLeaderboard.map((user) => (
+                {filteredLeaderboard.map((user, index) => (
                   <li key={user.id} className="list-item-leaderboard">
+                    {/* show the leaderboard position */}
                     <span className="username">{user.username}</span>
                     <span className="points">Points: {user.score}</span>
+                    <span className="position">{page * 5 + index + 1}</span>
+
                     <button
                       className="see-profile-button"
-                      onClick={() => alert(`Viewing profile of ${user.username}`)}
+                      onClick={() =>
+                        alert(`Viewing profile of ${user.username}`)
+                      }
                     >
                       See Profile
                     </button>

@@ -143,3 +143,38 @@ class CodeSubmissionResult(BaseModel):
     compile_output: str = ""
     message: str = ""
     points_awarded: int = 0
+    badge_awarded: str = ""
+
+
+class TagCreate(BaseModel):
+    name: str
+
+
+class TagRead(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class TagUpdate(BaseModel):
+    name: str = None
+
+
+class ChallengeTagCreate(BaseModel):
+    challenge_id: int
+    tag_id: int
+
+
+class ChallengeTagRead(BaseModel):
+    challenge_id: int
+    tag_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ChallengeTagUpdate(BaseModel):
+    challenge_id: int = None
+    tag_id: int = None

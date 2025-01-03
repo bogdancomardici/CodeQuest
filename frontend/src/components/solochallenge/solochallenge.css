@@ -1,16 +1,17 @@
 .solo-challenge-container {
-  margin-top: 5%;
+  margin-top: 3%;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #555;
+  margin-bottom: 3%;
 }
 
 .grid-layout-solo {
   display: grid;
-  grid-template-columns: 50% 50%;
+  grid-template-columns: 40% 60%;
   width: 100%;
   height: 100%;
   gap: 20px;
@@ -25,8 +26,8 @@
 
 .grid-item-solo.left-solo {
   background-color: #f8f9fa;
-  max-width: 500px;
-  max-height: 500px;
+  /* max-width: 600px;
+  max-height: 700px; */
   margin-left: 5%;
   display: flex;
   justify-content: center;
@@ -38,8 +39,8 @@
 
 .grid-item-solo.right-solo {
   background-color: #e9ecef;
-  max-width: 800px;
-  max-height: 500px;
+  /* max-width: 900px;
+  max-height: 700px; */
   margin-right: 5%;
   display: flex;
   justify-content: center;
@@ -52,25 +53,28 @@
 .card-solo {
   width: 90%;
   max-width: 100%;
-  max-height: 90%;
+  max-height: 500px;
   background: #fff;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
+  overflow: auto;
 }
 
 .card-solo h3 {
-  margin: none;
+  margin: 0;
   font-size: 1.5rem;
+  text-align: center;
 }
 
 .card-solo p {
   font-size: 1rem;
   color: #333;
+  white-space: pre-wrap;
 }
 
 .language-display {
@@ -134,12 +138,12 @@
 
 textarea {
   width: 100%;
-  max-width: 750px;
+  /* max-width: 750px; */
   max-height: 350px;
   padding: 10px;
   border-radius: 8px;
   border: 1px solid #ccc;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-family: monospace;
   resize: none;
 }

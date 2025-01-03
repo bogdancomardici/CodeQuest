@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import "./solochallenge.css";
 import { getChallenge, submitCode } from "../../api/challenges";
 import { useAuth } from "../authentification/AuthContext";
+import api from "../../api/apiInstance";
 
 function SoloChallenge() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ function SoloChallenge() {
   const [isRunning, setIsRunning] = useState(false);
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
+  const [recommendedResources, setRecommendedResources] = useState([]);
 
   useEffect(() => {
     const fetchChallenge = async () => {
@@ -29,7 +31,19 @@ function SoloChallenge() {
       }
     };
 
+    const fetchRecommendedResources = async () => {
+      try {
+        const response = await api.get(
+          `/challenges/${id}/recommended-resources`
+        );
+        setRecommendedResources(response.data);
+      } catch (err) {
+        console.error("Failed to fetch recommended resources:", err);
+      }
+    };
+
     fetchChallenge();
+    fetchRecommendedResources();
   }, [id]);
 
   useEffect(() => {
@@ -68,6 +82,11 @@ function SoloChallenge() {
           );
           setTime(0); // Reset the timer
           setIsRunning(false); // Stop the timer
+        }
+        if (result.badge_awarded) {
+          alert(
+            `Congratulations! You have been awarded the badge: ${result.badge_awarded}`
+          );
         }
       } else {
         setOutput("No output or an error occurred.");
@@ -125,16 +144,24 @@ function SoloChallenge() {
       <div className="grid-layout-solo">
         <div className="grid-item-solo left-solo">
           <div className="card-solo">
-            <h3>Challenge Details</h3>
+            <h3>{challenge.title}</h3>
             <p>
               <strong>Difficulty:</strong> {challenge.difficulty}
             </p>
             <p>
               <strong>Language:</strong> {challenge.language}
             </p>
-            <p>
-              <strong>Description:</strong> {challenge.description}
-            </p>
+            <p>{challenge.description}</p>
+          </div>
+          <div className="recommended-resources">
+            <h3>Recommended Resources</h3>
+            <ul>
+              {recommendedResources.map((resource) => (
+                <li key={resource.id}>
+                  <Link to={`/resource/${resource.id}`}>{resource.title}</Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
         <div className="grid-item-solo right-solo">

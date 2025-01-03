@@ -25,7 +25,7 @@ function LandingPage() {
           setIsLastPage(false);
         }
       } catch (error) {
-        console.error("Error fetching data:", error);  
+        console.error("Error fetching data:", error);
       }
     };
 
@@ -48,7 +48,16 @@ function LandingPage() {
         <div className="grid-item-landing invisible-landing"></div>
         <div className="grid-item-landing middle-landing">
           <div className="card-landing">
-          <div><h2>What's new?</h2></div>
+            <div className="welcome-message">
+              <h1>Welcome to CodeQuest!</h1>
+              <p>
+                Please log in to experience the full features of the
+                application.
+              </p>
+            </div>
+            <div>
+              <h2>What's new?</h2>
+            </div>
             <div className="tab-buttons">
               <button
                 className={`tab-button ${
@@ -77,8 +86,10 @@ function LandingPage() {
                   </li>
                 ))}
                 {placeholders.map((_, index) => (
-                  <li key={`placeholder-${index}`} className="list-item-placeholder">
-                  </li>
+                  <li
+                    key={`placeholder-${index}`}
+                    className="list-item-placeholder"
+                  ></li>
                 ))}
               </ul>
               <div className="pagination-controls">

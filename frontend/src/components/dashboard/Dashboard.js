@@ -22,16 +22,17 @@ function Dashboard() {
         );
         setBadges(badgesResponse.data);
 
-        const userResponse = await axios.get(`http://localhost:8000/users/${user.id}`);
+        const userResponse = await axios.get(
+          `http://localhost:8000/users/${user.id}`
+        );
         const userScore = userResponse.data.score;
         setScore(userScore);
-
-        if (userScore <= 10) {
+        if (userScore <= 50) {
           setRank("Beginner");
-          setProgress((userScore / 10) * 100);
+          setProgress((userScore / 50) * 100);
         } else if (userScore <= 150) {
           setRank("Intermediate");
-          setProgress(((userScore - 10) / (150 - 10)) * 100);
+          setProgress(((userScore - 50) / (150 - 50)) * 100);
         } else if (userScore <= 300) {
           setRank("Master");
           setProgress(((userScore - 150) / (300 - 150)) * 100);
