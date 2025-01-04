@@ -1,9 +1,11 @@
+from schemas import NotificationCreate, NotificationRead
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Query
 from typing import List
 from sqlalchemy.orm import Session
 from models import (
     Base,
+    Notification,
     ResourceTag,
     engine,
     SessionLocal,
@@ -33,6 +35,8 @@ from schemas import (
     ResourceUpdate,
     CodeSubmission,
     CodeSubmissionResult,
+    NotificationCreate,
+    NotificationRead
 )
 import requests
 import base64
@@ -108,6 +112,38 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     db_users = db.query(User).offset(skip).limit(limit).all()
     return db_users
+
+
+@app.post("/notifications/", response_model=NotificationRead)
+def create_notification(notification: NotificationCreate, db: Session = Depends(get_db)):
+    db_notification = Notification(
+        recipient_id=notification.recipient_id,
+        message=notification.message,
+        link=notification.link,
+        challenger_username=notification.challenger_username
+    )
+    db.add(db_notification)
+    db.commit()
+    db.refresh(db_notification)
+    return db_notification
+
+
+@app.get("/users/{user_id}/notifications", response_model=List[NotificationRead])
+def get_notifications(user_id: int, db: Session = Depends(get_db)):
+    notifications = db.query(Notification).filter(
+        Notification.recipient_id == user_id).all()
+    return notifications
+
+
+@app.delete("/notifications/{notification_id}", response_model=NotificationRead)
+def delete_notification(notification_id: int, db: Session = Depends(get_db)):
+    notification = db.query(Notification).filter(
+        Notification.id == notification_id).first()
+    if notification is None:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    db.delete(notification)
+    db.commit()
+    return notification
 
 
 @app.get("/usersOrderedByPoints/", response_model=List[UserRead])
@@ -372,6 +408,12 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     ):
         raise HTTPException(
             status_code=401, detail="Invalid username or password")
+
+    # Fetch notifications for the user
+    notifications = db.query(Notification).filter(
+        Notification.recipient_id == db_user.id).all()
+    db_user.notifications = notifications
+
     return db_user
 
 

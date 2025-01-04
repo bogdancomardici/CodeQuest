@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
@@ -190,3 +191,23 @@ class ChallengeTagRead(BaseModel):
 class ChallengeTagUpdate(BaseModel):
     challenge_id: int = None
     tag_id: int = None
+
+
+class NotificationCreate(BaseModel):
+    recipient_id: int
+    message: str
+    link: str
+    challenger_username: str
+
+
+class NotificationRead(BaseModel):
+    id: int
+    recipient_id: int
+    message: str
+    link: str
+    read: bool
+    created_at: datetime
+    challenger_username: str
+
+    class Config:
+        from_attributes = True

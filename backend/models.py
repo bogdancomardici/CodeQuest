@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Sequence
+from datetime import datetime
+from sqlalchemy import Boolean, DateTime, create_engine, Column, Integer, String, ForeignKey, Sequence
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
@@ -107,3 +108,20 @@ class UserChallenge(Base):
 
 
 Base.metadata.create_all(bind=engine)
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    recipient_id = Column(Integer, ForeignKey("users.id"))
+    message = Column(String, index=True)
+    link = Column(String)
+    read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    challenger_username = Column(String(50))
+
+    recipient = relationship("User", back_populates="notifications")
+
+
+User.notifications = relationship("Notification", back_populates="recipient")

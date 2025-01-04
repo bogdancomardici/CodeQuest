@@ -14,10 +14,14 @@ CREATE SEQUENCE users_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
 DROP SEQUENCE IF EXISTS tag_id_seq CASCADE;
 CREATE SEQUENCE tag_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
 
+DROP SEQUENCE IF EXISTS notification_id_seq CASCADE;
+CREATE SEQUENCE notification_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
 DROP TABLE IF EXISTS "friends" CASCADE;
 DROP TABLE IF EXISTS "userbadge" CASCADE;
 DROP TABLE IF EXISTS "userchallenge" CASCADE;
 DROP TABLE IF EXISTS "challengetag" CASCADE;
+DROP TABLE IF EXISTS "notifications" CASCADE;
 
 DROP TABLE IF EXISTS "badges" CASCADE;
 DROP TABLE IF EXISTS "challenges" CASCADE;
@@ -65,7 +69,6 @@ CREATE TABLE "public"."resourcetag" (
     CONSTRAINT "resourcetag_pkey" PRIMARY KEY ("resource_id", "tag_id")
 ) WITH (oids = false);
 
-
 CREATE TABLE "public"."friends" (
     "user_id1" integer NOT NULL,
     "user_id2" integer NOT NULL,
@@ -104,6 +107,17 @@ CREATE TABLE "public"."users" (
     CONSTRAINT "users_username_key" UNIQUE ("username")
 ) WITH (oids = false);
 
+CREATE TABLE "public"."notifications" (
+    "id" integer DEFAULT nextval('notification_id_seq') NOT NULL,
+    "recipient_id" integer NOT NULL,
+    "message" character varying(255) NOT NULL,
+    "link" character varying(255),
+    "read" boolean DEFAULT false,
+    "created_at" timestamp DEFAULT CURRENT_TIMESTAMP,
+    "challenger_username" character varying(50),
+    CONSTRAINT "notification_pkey" PRIMARY KEY ("id")
+) WITH (oids = false);
+
 ALTER TABLE ONLY "public"."friends" ADD CONSTRAINT "friend_user_id1_fkey" FOREIGN KEY (user_id1) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 ALTER TABLE ONLY "public"."friends" ADD CONSTRAINT "friend_user_id2_fkey" FOREIGN KEY (user_id2) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 
@@ -118,6 +132,8 @@ ALTER TABLE ONLY "public"."challengetag" ADD CONSTRAINT "challengetag_tag_id_fke
 
 ALTER TABLE ONLY "public"."resourcetag" ADD CONSTRAINT "resourcetag_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE NOT DEFERRABLE;
 ALTER TABLE ONLY "public"."resourcetag" ADD CONSTRAINT "resourcetag_tag_id_fkey" FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE NOT DEFERRABLE;
+
+ALTER TABLE ONLY "public"."notifications" ADD CONSTRAINT "notification_recipient_id_fkey" FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 
 INSERT INTO badges (title, description) VALUES 
 ('Beginner Badge', 'Awarded for starting out'),

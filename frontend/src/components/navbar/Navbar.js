@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../authentification/AuthContext";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./navbar.css";
 
 function NavBar() {
@@ -87,11 +89,22 @@ function NavBar() {
             </li>
           )}
           {user && (
+            <li className="nav-item">
+              <NavLink
+                to="/inbox"
+                className={({ isActive }) =>
+                  isActive ? "nav-links active" : "nav-links"
+                }
+                onClick={handleClick}
+              >
+                <i className="fas fa-envelope"></i> Inbox
+              </NavLink>
+            </li>
+          )}
+          {user && (
             <>
               <li className="nav-item">
-                <span className="nav-links">
-                  {user.username.toUpperCase()}
-                </span>
+                <span className="nav-links">{user.username.toUpperCase()}</span>
               </li>
               <li className="nav-item">
                 <NavLink
@@ -127,6 +140,7 @@ function NavBar() {
           <span className="icon">{click ? "✖" : "☰"}</span>
         </div>
       </div>
+      <ToastContainer />
     </nav>
   );
 }

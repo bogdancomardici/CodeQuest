@@ -1,0 +1,141 @@
+.inbox-container {
+  margin-top: 5%;
+  width: 100%;
+  background-color: #555;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.grid-layout-inbox {
+  display: grid;
+  grid-template-columns: 20% 60% 20%;
+  width: 100%;
+  height: auto;
+  background-color: #555;
+}
+
+.grid-item-inbox {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.grid-item-inbox.middle-inbox {
+  background-color: #555;
+  color: #555;
+}
+
+.grid-item-inbox.invisible-inbox {
+  background-color: #555;
+}
+
+.card-inbox {
+  width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  min-height: 500px;
+  min-width: 600px;
+}
+
+.card-text-inbox {
+  text-align: center;
+}
+
+.inner-card-inbox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.notifications-list {
+  list-style-type: none;
+  padding: 0;
+  width: 100%;
+}
+
+.notification-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.notification-item span {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.button-container-inbox {
+  display: flex;
+  margin-left: 10px;
+  gap: 10px;
+}
+
+.button-inbox {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: #fff;
+  text-align: center;
+}
+
+.accept-button {
+  background-color: #86bc25;
+}
+
+.reject-button {
+  background-color: #dc3545;
+}
+
+@media (max-width: 1400px) {
+  .card-inbox {
+    min-width: 500px;
+  }
+
+  .grid-layout-inbox {
+    grid-template-columns: 25% 50% 25%;
+  }
+}
+
+@media (max-width: 1000px) {
+  .card-inbox {
+    min-width: 300px;
+  }
+
+  .grid-layout-inbox {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 10px;
+  }
+
+  .grid-item-inbox.middle-inbox {
+    order: 1;
+  }
+
+  .grid-item-inbox.invisible-inbox {
+    display: none;
+  }
+}

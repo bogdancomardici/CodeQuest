@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getChallengesWithPagination, addChallenge } from "../../api/challenges";
+import {
+  getChallengesWithPagination,
+  addChallenge,
+} from "../../api/challenges";
+import axios from "axios";
 import { useAuth } from "../authentification/AuthContext";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { List, ListItem, ListItemText, Checkbox } from "@mui/material";
 import "./challenges.css";
 
 function Challenges() {
@@ -14,6 +21,7 @@ function Challenges() {
   const [page, setPage] = useState(0);
   const [isLastPage, setIsLastPage] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showFriendsModal, setShowFriendsModal] = useState(false);
   const [newChallenge, setNewChallenge] = useState({
     title: "",
     description: "",
@@ -22,6 +30,9 @@ function Challenges() {
     difficulty: "",
     language: "",
   });
+  const [friends, setFriends] = useState([]);
+  const [selectedFriends, setSelectedFriends] = useState([]);
+  const [currentChallengeId, setCurrentChallengeId] = useState(null);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -44,11 +55,29 @@ function Challenges() {
       challenges.filter(
         (challenge) =>
           challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          challenge.difficulty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          challenge.difficulty
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           challenge.language.toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
   }, [searchTerm, challenges]);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/users/${user.id}/friends`
+        );
+        setFriends(response.data);
+      } catch (error) {
+        console.error("Error fetching friends:", error);
+      }
+    };
+    if (user) {
+      fetchFriends();
+    }
+  }, [user]);
 
   const handleAddChallenge = async () => {
     const challengeToSubmit = {
@@ -78,6 +107,58 @@ function Challenges() {
     }
   };
 
+  const handleChallengeFriend = async () => {
+    if (selectedFriends.length === 0) {
+      toast.error("Please select at least one friend to challenge.");
+      return;
+    }
+
+    try {
+      const challenge = challenges.find(
+        (challenge) => challenge.id === currentChallengeId
+      );
+      await Promise.all(
+        selectedFriends.map(async (friendUsername) => {
+          const userResponse = await axios.get(
+            `http://localhost:8000/users/search`,
+            {
+              params: { query: friendUsername },
+            }
+          );
+          const recipient = userResponse.data[0];
+          if (!recipient) {
+            throw new Error(`User ${friendUsername} not found`);
+          }
+          await axios.post(`http://localhost:8000/notifications`, {
+            recipient_id: recipient.id,
+            message: `You have been challenged to "${challenge.title}" challenge by "${user.username}"!`,
+            link: `/soloChallenge/${currentChallengeId}`,
+            challenger_username: user.username,
+          });
+        })
+      );
+      toast.success("Challenge sent successfully!");
+      setShowFriendsModal(false);
+      setSelectedFriends([]);
+    } catch (error) {
+      console.error("Error sending challenge:", error);
+      toast.error("Failed to send challenge.");
+    }
+  };
+
+  const handleFriendToggle = (friendUsername) => {
+    setSelectedFriends((prevSelectedFriends) =>
+      prevSelectedFriends.includes(friendUsername)
+        ? prevSelectedFriends.filter((username) => username !== friendUsername)
+        : [...prevSelectedFriends, friendUsername]
+    );
+  };
+
+  const openFriendsModal = (challengeId) => {
+    setCurrentChallengeId(challengeId);
+    setShowFriendsModal(true);
+  };
+
   return (
     <div className="challenges-container">
       <div className="grid-layout-challenges">
@@ -104,11 +185,16 @@ function Challenges() {
                     <div className="button-container-challenges">
                       <button
                         className="button-challenges solo-button"
-                        onClick={() => navigate(`/soloChallenge/${challenge.id}`)}
+                        onClick={() =>
+                          navigate(`/soloChallenge/${challenge.id}`)
+                        }
                       >
                         Solo Challenge
                       </button>
-                      <button className="button-challenges friend-button">
+                      <button
+                        className="button-challenges friend-button"
+                        onClick={() => openFriendsModal(challenge.id)}
+                      >
                         Challenge a Friend
                       </button>
                     </div>
@@ -135,7 +221,10 @@ function Challenges() {
 
             {user && user.role === "admin" && (
               <div>
-                <button onClick={() => setShowModal(true)} className="button-add">
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="button-add"
+                >
                   Add Challenge
                 </button>
               </div>
@@ -170,7 +259,10 @@ function Challenges() {
                 placeholder="Enter description"
                 value={newChallenge.description}
                 onChange={(e) =>
-                  setNewChallenge({ ...newChallenge, description: e.target.value })
+                  setNewChallenge({
+                    ...newChallenge,
+                    description: e.target.value,
+                  })
                 }
               />
             </Form.Group>
@@ -205,7 +297,10 @@ function Challenges() {
                 as="select"
                 value={newChallenge.difficulty}
                 onChange={(e) =>
-                  setNewChallenge({ ...newChallenge, difficulty: e.target.value })
+                  setNewChallenge({
+                    ...newChallenge,
+                    difficulty: e.target.value,
+                  })
                 }
               >
                 <option value="">Select Difficulty</option>
@@ -237,6 +332,43 @@ function Challenges() {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <Modal
+        show={showFriendsModal}
+        onHide={() => setShowFriendsModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Select Friends to Challenge</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <List>
+            {friends.map((friend) => (
+              <ListItem
+                key={friend.id}
+                button
+                onClick={() => handleFriendToggle(friend.username)}
+              >
+                <Checkbox checked={selectedFriends.includes(friend.username)} />
+                <ListItemText primary={friend.username} />
+              </ListItem>
+            ))}
+          </List>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowFriendsModal(false)}
+          >
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleChallengeFriend}>
+            Challenge Friends
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <ToastContainer />
     </div>
   );
 }
