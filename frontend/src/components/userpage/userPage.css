@@ -132,8 +132,6 @@
   background-color: #28a745;
 }
 
-/* Add these styles to your existing userPage.css file */
-
 .admin-section {
   background-color: #fff;
   padding: 20px;
@@ -190,6 +188,7 @@
   color: #fff;
   text-align: center;
   background-color: #007bff;
+  width: 130px; /* Ensure all buttons have the same width */
 }
 
 .button-role-change + .button-role-change {

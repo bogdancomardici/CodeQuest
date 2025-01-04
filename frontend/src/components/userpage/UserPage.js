@@ -146,8 +146,10 @@ function UsersPage() {
     }
   };
 
-  const filteredAdminUsers = allUsers.filter((u) =>
-    u.username.toLowerCase().includes(adminSearchTerm.toLowerCase())
+  const filteredAdminUsers = allUsers.filter(
+    (u) =>
+      u.username.toLowerCase().includes(adminSearchTerm.toLowerCase()) &&
+      u.id !== user.id
   );
 
   if (loading) {
