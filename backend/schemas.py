@@ -20,6 +20,18 @@ class UserRead(BaseModel):
         from_attributes = True
 
 
+class UserSearch(BaseModel):
+    query: str
+
+
+class FriendCreate(BaseModel):
+    user_id1: int
+    user_id2: int
+
+    class Config:
+        from_attributes = True
+
+
 class UserUpdate(BaseModel):
     username: str = None
     email: str = None

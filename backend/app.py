@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from typing import List
 from sqlalchemy.orm import Session
 from models import (
@@ -17,6 +17,7 @@ from models import (
 )
 from schemas import (
     CodeSubmissionStatus,
+    FriendCreate,
     UserCreate,
     UserRead,
     UserUpdate,
@@ -120,6 +121,13 @@ def get_users_ordered_by_points(
     return db_users
 
 
+@app.get("/users/search", response_model=List[UserRead])
+def search_users(query: str = Query(...), db: Session = Depends(get_db)):
+    print(f"Searching for users with query: {query}")
+    users = db.query(User).filter(User.username.ilike(f"%{query}%")).all()
+    return users
+
+
 @app.get("/users/{user_id}", response_model=UserRead)
 def read_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
@@ -152,6 +160,15 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return user
+
+
+@app.get("/users/{user_id}/friends", response_model=List[UserRead])
+def get_friends(user_id: int, db: Session = Depends(get_db)):
+    friends = db.query(User).join(Friend, (Friend.user_id1 == User.id) | (Friend.user_id2 == User.id)).filter(
+        ((Friend.user_id1 == user_id) |
+         (Friend.user_id2 == user_id)) & (User.id != user_id)
+    ).all()
+    return friends
 
 
 @app.post("/users/{user_id}/badges/{badge_id}", response_model=UserRead)
@@ -445,7 +462,7 @@ def submit_code(
     # Update user score based on problem difficulty
     user = db.query(User).filter(User.id == submission.user_id).first()
     points_awarded = 0
-    badge_awarded = None
+    badge_awarded = ""
     if user:
         initial_score = user.score
         points_awarded = 10 if db_challenge.difficulty == "Easy" else 20 if db_challenge.difficulty == "Medium" else 40
@@ -478,8 +495,8 @@ def submit_code(
         "token": submission_token,
         "compile_output": result_data.get("compile_output", "") or "",
         "message": result_data.get("message", "") or "",
-        "points_awarded": points_awarded,  # Include points_awarded in the response
-        "badge_awarded": badge_awarded  # Include badge_awarded in the response
+        "points_awarded": points_awarded,
+        "badge_awarded": badge_awarded
     }
 
 
@@ -494,3 +511,27 @@ def get_recommended_resources(challenge_id: int, db: Session = Depends(get_db)):
     recommended_resources = db.query(Resource).join(
         ResourceTag).filter(ResourceTag.tag_id.in_(tag_ids)).all()
     return recommended_resources
+
+
+@app.post("/users/{user_id}/friends", response_model=FriendCreate)
+def add_friend(user_id: int, friend_username: str = Query(...), db: Session = Depends(get_db)):
+    friend = db.query(User).filter(User.username == friend_username).first()
+    if not friend:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_id == friend.id:
+        raise HTTPException(
+            status_code=400, detail="Cannot add yourself as a friend")
+
+    existing_friend = db.query(Friend).filter(
+        ((Friend.user_id1 == user_id) & (Friend.user_id2 == friend.id)) |
+        ((Friend.user_id1 == friend.id) & (Friend.user_id2 == user_id))
+    ).first()
+
+    if existing_friend:
+        raise HTTPException(status_code=400, detail="Already friends")
+
+    new_friend = Friend(user_id1=user_id, user_id2=friend.id)
+    db.add(new_friend)
+    db.commit()
+    return new_friend
