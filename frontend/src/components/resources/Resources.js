@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { addResources, getResourcesWithPagination } from "../../api/resources";
+import {
+  addResources,
+  getResourcesWithPagination,
+  deleteResource,
+} from "../../api/resources";
 import { useAuth } from "../authentification/AuthContext";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./resources.css";
 
 function Resources() {
@@ -14,13 +20,12 @@ function Resources() {
   const [page, setPage] = useState(0);
   const [isLastPage, setIsLastPage] = useState(false);
   const navigate = useNavigate();
-  const [newResoruce, setNewResource] = useState({
+  const [newResource, setNewResource] = useState({
     title: "",
     description: "",
   });
   const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
-
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -35,10 +40,10 @@ function Resources() {
             description: "",
             isPlaceholder: true,
           });
-        } 
+        }
 
         setResources(filledData);
-        setIsLastPage(data.length < 5); 
+        setIsLastPage(data.length < 5);
       } catch (error) {
         console.error("Error fetching resources:", error);
       }
@@ -60,26 +65,39 @@ function Resources() {
     navigate(`/resource/${id}`);
   };
 
+  const handleDeleteResource = async (id) => {
+    try {
+      await deleteResource(id);
+      setResources(resources.filter((resource) => resource.id !== id));
+      setFilteredResources(
+        filteredResources.filter((resource) => resource.id !== id)
+      );
+      toast.success("Resource deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting resource:", error);
+      toast.error("Failed to delete resource.");
+    }
+  };
 
   const handleAddResource = async () => {
-      const resourceToSubmit = {
-        title: newResoruce.title,
-        description: newResoruce.description,
-      };
-  
-      try {
-        await addResources(resourceToSubmit);
-        console.log("Resource added successfully!");
-        setShowModal(false);
-        setNewResource({
-          title: "",
-          description: "",
-        });
-        setPage(0);
-      } catch (error) {
-        console.error("Error adding resources:", error);
-      }
+    const resourceToSubmit = {
+      title: newResource.title,
+      description: newResource.description,
     };
+
+    try {
+      await addResources(resourceToSubmit);
+      console.log("Resource added successfully!");
+      setShowModal(false);
+      setNewResource({
+        title: "",
+        description: "",
+      });
+      setPage(0);
+    } catch (error) {
+      console.error("Error adding resources:", error);
+    }
+  };
 
   return (
     <div className="resources-container">
@@ -115,6 +133,14 @@ function Resources() {
                         >
                           Explore
                         </button>
+                        {user && user.role === "admin" && (
+                          <button
+                            className="button-resources delete-button"
+                            onClick={() => handleDeleteResource(resource.id)}
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     )}
                   </li>
@@ -137,10 +163,13 @@ function Resources() {
                 </button>
               </div>
             </div>
-            {user && user.role === "admin" && (
+            {user && (user.role === "admin" || user.role === "expert") && (
               <div>
-                <button onClick={() => setShowModal(true)} className="button-add">
-                  Add Challenge
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="button-add"
+                >
+                  Add Resource
                 </button>
               </div>
             )}
@@ -159,9 +188,9 @@ function Resources() {
               <Form.Control
                 type="text"
                 placeholder="Enter title"
-                value={newResoruce.title}
+                value={newResource.title}
                 onChange={(e) =>
-                  setNewResource({ ...newResoruce, title: e.target.value })
+                  setNewResource({ ...newResource, title: e.target.value })
                 }
               />
             </Form.Group>
@@ -171,9 +200,12 @@ function Resources() {
               <Form.Control
                 as="textarea"
                 placeholder="Enter description"
-                value={newResoruce.description}
+                value={newResource.description}
                 onChange={(e) =>
-                  setNewResource({ ...newResoruce, description: e.target.value })
+                  setNewResource({
+                    ...newResource,
+                    description: e.target.value,
+                  })
                 }
               />
             </Form.Group>
@@ -188,6 +220,7 @@ function Resources() {
           </Button>
         </Modal.Footer>
       </Modal>
+      <ToastContainer />
     </div>
   );
 }

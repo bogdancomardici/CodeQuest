@@ -63,3 +63,12 @@ export const addChallenge = async (newChallenge) => {
     throw error;
   }
 };
+
+export const deleteChallenge = async (id) => {
+  try {
+    await api.delete(`/challenges/${id}`);
+  } catch (error) {
+    console.error("Error deleting challenge:", error);
+    throw error;
+  }
+};

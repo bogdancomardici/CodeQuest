@@ -34,11 +34,11 @@ class FriendCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    username: str = None
-    email: str = None
-    password: str = None
-    role: str = None
-    score: int = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+    role: Optional[str] = None
+    score: Optional[int] = None
 
 
 class UserLogin(BaseModel):

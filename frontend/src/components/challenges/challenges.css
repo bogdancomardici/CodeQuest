@@ -114,10 +114,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: transparent; 
+  background-color: transparent;
   box-shadow: none;
-  height: 5px; 
-  visibility: hidden; 
+  height: 5px;
+  visibility: hidden;
 }
 
 .pagination-controls {
@@ -141,7 +141,6 @@
   cursor: not-allowed;
 }
 
-
 .button-container-challenges {
   display: flex;
   gap: 10px;
@@ -160,11 +159,33 @@
   color: #fff;
 }
 
+.solo-button:hover {
+  background-color: #76a520;
+  color: #fff;
+  transition: background-color 0.3s ease;
+}
+
 .friend-button {
   background-color: #007bff;
   color: #fff;
 }
 
+.friend-button:hover {
+  background-color: #0056b3;
+  color: #fff;
+  transition: background-color 0.3s ease;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+  color: #fff;
+  transition: background-color 0.3s ease;
+}
 
 .button-add {
   padding: 12px 20px;

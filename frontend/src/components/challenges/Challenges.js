@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   getChallengesWithPagination,
   addChallenge,
+  deleteChallenge,
 } from "../../api/challenges";
 import axios from "axios";
 import { useAuth } from "../authentification/AuthContext";
@@ -107,6 +108,20 @@ function Challenges() {
     }
   };
 
+  const handleDeleteChallenge = async (id) => {
+    try {
+      await deleteChallenge(id);
+      setChallenges(challenges.filter((challenge) => challenge.id !== id));
+      setFilteredChallenges(
+        filteredChallenges.filter((challenge) => challenge.id !== id)
+      );
+      toast.success("Challenge deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting challenge:", error);
+      toast.error("Failed to delete challenge.");
+    }
+  };
+
   const handleChallengeFriend = async () => {
     if (selectedFriends.length === 0) {
       toast.error("Please select at least one friend to challenge.");
@@ -197,6 +212,14 @@ function Challenges() {
                       >
                         Challenge a Friend
                       </button>
+                      {user && user.role === "admin" && (
+                        <button
+                          className="button-challenges delete-button"
+                          onClick={() => handleDeleteChallenge(challenge.id)}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -219,7 +242,7 @@ function Challenges() {
               </div>
             </div>
 
-            {user && user.role === "admin" && (
+            {user && (user.role === "admin" || user.role === "expert") && (
               <div>
                 <button
                   onClick={() => setShowModal(true)}

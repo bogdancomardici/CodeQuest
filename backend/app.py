@@ -179,9 +179,8 @@ def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     for key, value in user.dict(exclude_unset=True).items():
         if key == "password":
-            value = bcrypt.hashpw(value.encode("utf-8"), bcrypt.gensalt()).decode(
-                "utf-8"
-            )
+            value = bcrypt.hashpw(value.encode("utf-8"),
+                                  bcrypt.gensalt()).decode("utf-8")
         setattr(db_user, key, value)
     db.commit()
     db.refresh(db_user)
@@ -367,6 +366,16 @@ def get_resources(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
         .limit(limit)
         .all()
     )
+
+
+@app.delete("/resources/{resource_id}", response_model=ResourceRead)
+def delete_resource(resource_id: int, db: Session = Depends(get_db)):
+    resource = db.query(Resource).filter(Resource.id == resource_id).first()
+    if resource is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    db.delete(resource)
+    db.commit()
+    return resource
 
 
 # User Badges

@@ -39,3 +39,12 @@ export const addResources = async (newResource) => {
     throw error;
   }
 };
+
+export const deleteResource = async (id) => {
+  try {
+    await api.delete(`/resources/${id}`);
+  } catch (error) {
+    console.error("Error deleting resource:", error);
+    throw error;
+  }
+};

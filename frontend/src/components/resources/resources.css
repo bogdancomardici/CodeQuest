@@ -120,6 +120,14 @@
   background-color: #76a520;
 }
 
+.delete-button {
+  background-color: #dc3545;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}
+
 .list-item-resources.placeholder {
   background-color: #f0f0f0;
   color: #bbb;
@@ -131,7 +139,6 @@
   text-align: center;
   font-style: italic;
 }
-
 
 .button-add {
   padding: 12px 20px;
