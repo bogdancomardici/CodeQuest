@@ -38,16 +38,17 @@ function Challenges() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const fetchChallenges = async () => {
+    try {
+      const data = await getChallengesWithPagination(page * 5, 5);
+      setChallenges(data);
+      setIsLastPage(data.length < 5);
+    } catch (error) {
+      console.error("Error fetching challenges:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchChallenges = async () => {
-      try {
-        const data = await getChallengesWithPagination(page * 5, 5);
-        setChallenges(data);
-        setIsLastPage(data.length < 5);
-      } catch (error) {
-        console.error("Error fetching challenges:", error);
-      }
-    };
     fetchChallenges();
   }, [page]);
 
@@ -92,7 +93,7 @@ function Challenges() {
 
     try {
       await addChallenge(challengeToSubmit);
-      console.log("Challenge added successfully!");
+      toast.success("Challenge added successfully!");
       setShowModal(false);
       setNewChallenge({
         title: "",
@@ -103,8 +104,10 @@ function Challenges() {
         language: "",
       });
       setPage(0);
+      fetchChallenges();
     } catch (error) {
       console.error("Error adding challenge:", error);
+      toast.error("Failed to add challenge.");
     }
   };
 

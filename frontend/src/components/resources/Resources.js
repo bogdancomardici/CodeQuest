@@ -27,28 +27,28 @@ function Resources() {
   const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchResources = async () => {
-      try {
-        const data = await getResourcesWithPagination(page * 5, 5);
+  const fetchResources = async () => {
+    try {
+      const data = await getResourcesWithPagination(page * 5, 5);
 
-        const filledData = [...data];
-        while (filledData.length < 5) {
-          filledData.push({
-            id: `placeholder-${filledData.length}`,
-            title: "",
-            description: "",
-            isPlaceholder: true,
-          });
-        }
-
-        setResources(filledData);
-        setIsLastPage(data.length < 5);
-      } catch (error) {
-        console.error("Error fetching resources:", error);
+      const filledData = [...data];
+      while (filledData.length < 5) {
+        filledData.push({
+          id: `placeholder-${filledData.length}`,
+          title: "",
+          description: "",
+          isPlaceholder: true,
+        });
       }
-    };
 
+      setResources(filledData);
+      setIsLastPage(data.length < 5);
+    } catch (error) {
+      console.error("Error fetching resources:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchResources();
   }, [page]);
 
@@ -87,15 +87,17 @@ function Resources() {
 
     try {
       await addResources(resourceToSubmit);
-      console.log("Resource added successfully!");
+      toast.success("Resource added successfully!");
       setShowModal(false);
       setNewResource({
         title: "",
         description: "",
       });
       setPage(0);
+      fetchResources(); // Reload resources to display the new resource
     } catch (error) {
       console.error("Error adding resources:", error);
+      toast.error("Failed to add resource.");
     }
   };
 
