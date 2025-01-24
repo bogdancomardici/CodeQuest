@@ -5,7 +5,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./inbox.css";
 
-function Inbox() {
+function Inbox({ updateNotifications }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
 
@@ -31,7 +31,11 @@ function Inbox() {
       await axios.delete(
         `http://localhost:8000/notifications/${notificationId}`
       );
-      setNotifications(notifications.filter((n) => n.id !== notificationId));
+      const updatedNotifications = notifications.filter(
+        (n) => n.id !== notificationId
+      );
+      setNotifications(updatedNotifications);
+      updateNotifications(updatedNotifications); // Update notifications in NavBar
       toast.success("Notification deleted successfully!");
     } catch (error) {
       console.error("Error deleting notification:", error);
@@ -58,6 +62,9 @@ function Inbox() {
                         <a
                           href={notification.link}
                           className="button-inbox accept-button"
+                          onClick={() =>
+                            handleDeleteNotification(notification.id)
+                          }
                         >
                           Accept
                         </a>

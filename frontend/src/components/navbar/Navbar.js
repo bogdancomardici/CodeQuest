@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
+import axios from "axios";
 import { useAuth } from "../authentification/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -8,8 +9,31 @@ import "./navbar.css";
 function NavBar() {
   const [click, setClick] = useState(false);
   const { user, logout } = useAuth();
+  const [notifications, setNotifications] = useState([]);
 
   const handleClick = () => setClick(!click);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/users/${user.id}/notifications`
+        );
+        setNotifications(response.data);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  const updateNotifications = (updatedNotifications) => {
+    setNotifications(updatedNotifications);
+  };
+
+  const unreadCount = notifications.length;
 
   return (
     <nav className="navbar">
@@ -98,6 +122,9 @@ function NavBar() {
                 onClick={handleClick}
               >
                 <i className="fas fa-envelope"></i> Inbox
+                {unreadCount > 0 && (
+                  <span className="notification-count">{unreadCount}</span>
+                )}
               </NavLink>
             </li>
           )}
