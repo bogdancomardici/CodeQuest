@@ -99,7 +99,6 @@ function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="grid-item-dashboard invisible-dashboard"></div>
       </div>
     </div>
   );

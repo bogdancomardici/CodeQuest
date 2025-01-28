@@ -1,7 +1,7 @@
 from schemas import NotificationCreate, NotificationRead
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Query
-from typing import List
+from typing import List, Optional
 from sqlalchemy.orm import Session
 from models import (
     Base,
@@ -296,6 +296,29 @@ def create_challenge(ch_data: ChallengeCreate, db: Session = Depends(get_db)):
 def read_challenges(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     challenges = db.query(Challenge).offset(skip).limit(limit).all()
     return challenges
+
+
+@app.get("/challenges/filter", response_model=List[ChallengeRead])
+def filter_challenges(
+    sort_by: str = "latest",
+    language: Optional[str] = None,
+    difficulty: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Challenge)
+
+    if language:
+        query = query.filter(Challenge.language == language)
+
+    if difficulty:
+        query = query.filter(Challenge.difficulty == difficulty)
+
+    if sort_by == "latest":
+        query = query.order_by(Challenge.id.desc())
+    elif sort_by == "oldest":
+        query = query.order_by(Challenge.id.asc())
+
+    return query.all()
 
 
 @app.get("/challenges/{challenge_id}", response_model=ChallengeRead)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getChallengesWithPagination,
@@ -34,11 +34,16 @@ function Challenges() {
   const [friends, setFriends] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [currentChallengeId, setCurrentChallengeId] = useState(null);
+  const [filter, setFilter] = useState({
+    sortBy: "latest",
+    language: "",
+    difficulty: "",
+  });
 
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const fetchChallenges = async () => {
+  const fetchChallenges = useCallback(async () => {
     try {
       const data = await getChallengesWithPagination(page * 5, 5);
       setChallenges(data);
@@ -46,11 +51,32 @@ function Challenges() {
     } catch (error) {
       console.error("Error fetching challenges:", error);
     }
-  };
+  }, [page]);
+
+  const fetchFilteredChallenges = useCallback(async () => {
+    try {
+      const params = {
+        sort_by: filter.sortBy,
+        ...(filter.language && { language: filter.language }),
+        ...(filter.difficulty && { difficulty: filter.difficulty }),
+      };
+      const response = await axios.get(
+        "http://localhost:8000/challenges/filter",
+        { params }
+      );
+      setFilteredChallenges(response.data);
+    } catch (error) {
+      console.error("Error fetching filtered challenges:", error);
+    }
+  }, [filter]);
 
   useEffect(() => {
     fetchChallenges();
-  }, [page]);
+  }, [page, fetchChallenges]);
+
+  useEffect(() => {
+    fetchFilteredChallenges();
+  }, [filter, fetchFilteredChallenges]);
 
   useEffect(() => {
     setFilteredChallenges(
@@ -177,6 +203,14 @@ function Challenges() {
     setShowFriendsModal(true);
   };
 
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilter((prevFilter) => ({
+      ...prevFilter,
+      [name]: value,
+    }));
+  };
+
   return (
     <div className="challenges-container">
       <div className="grid-layout-challenges">
@@ -191,6 +225,44 @@ function Challenges() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              <div className="filter-container">
+                <select
+                  name="sortBy"
+                  className="filter-dropdown"
+                  value={filter.sortBy}
+                  onChange={handleFilterChange}
+                >
+                  <option value="latest">Latest</option>
+                  <option value="oldest">Oldest</option>
+                </select>
+                <select
+                  name="language"
+                  className="filter-dropdown"
+                  value={filter.language}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">All Languages</option>
+                  {/* Add options dynamically based on available languages */}
+                  {Array.from(new Set(challenges.map((c) => c.language))).map(
+                    (language) => (
+                      <option key={language} value={language}>
+                        {language}
+                      </option>
+                    )
+                  )}
+                </select>
+                <select
+                  name="difficulty"
+                  className="filter-dropdown"
+                  value={filter.difficulty}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">All Difficulties</option>
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
             </div>
 
             <div className="list-container-challenges">
