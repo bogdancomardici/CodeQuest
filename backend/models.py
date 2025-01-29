@@ -29,21 +29,25 @@ tag_id_seq = Sequence("tag_id_seq")
 
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, Sequence("users_id_seq"), primary_key=True, index=True)
+    id = Column(Integer, Sequence("users_id_seq"),
+                primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     password = Column(String)
     role = Column(String)
     score = Column(Integer, default=0)
-    badges = relationship("Badge", secondary="userbadge", back_populates="users")
+    badges = relationship("Badge", secondary="userbadge",
+                          back_populates="users")
 
 
 class Badge(Base):
     __tablename__ = "badges"
-    id = Column(Integer, Sequence("badge_id_seq"), primary_key=True, index=True)
+    id = Column(Integer, Sequence("badge_id_seq"),
+                primary_key=True, index=True)
     title = Column(String, unique=True, index=True)
     description = Column(String)
-    users = relationship("User", secondary="userbadge", back_populates="badges")
+    users = relationship("User", secondary="userbadge",
+                         back_populates="badges")
 
 
 class Challenge(Base):
@@ -55,7 +59,8 @@ class Challenge(Base):
     output = Column(String)
     difficulty = Column(String)
     language = Column(String)
-    tags = relationship("Tag", secondary="challengetag", back_populates="challenges")
+    tags = relationship("Tag", secondary="challengetag",
+                        back_populates="challenges")
 
 
 class Tag(Base):
@@ -65,21 +70,25 @@ class Tag(Base):
     challenges = relationship(
         "Challenge", secondary="challengetag", back_populates="tags"
     )
-    resources = relationship("Resource", secondary="resourcetag", back_populates="tags")
+    resources = relationship(
+        "Resource", secondary="resourcetag", back_populates="tags")
 
 
 class ChallengeTag(Base):
     __tablename__ = "challengetag"
-    challenge_id = Column(Integer, ForeignKey("challenges.id"), primary_key=True)
+    challenge_id = Column(Integer, ForeignKey(
+        "challenges.id"), primary_key=True)
     tag_id = Column(Integer, ForeignKey("tags.id"), primary_key=True)
 
 
 class Resource(Base):
     __tablename__ = "resources"
-    id = Column(Integer, Sequence("resource_id_seq"), primary_key=True, index=True)
+    id = Column(Integer, Sequence("resource_id_seq"),
+                primary_key=True, index=True)
     title = Column(String, unique=True, index=True)
     description = Column(String)
-    tags = relationship("Tag", secondary="resourcetag", back_populates="resources")
+    tags = relationship("Tag", secondary="resourcetag",
+                        back_populates="resources")
 
 
 class ResourceTag(Base):
@@ -103,7 +112,8 @@ class UserBadge(Base):
 class UserChallenge(Base):
     __tablename__ = "userchallenge"
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    challenge_id = Column(Integer, ForeignKey("challenges.id"), primary_key=True)
+    challenge_id = Column(Integer, ForeignKey(
+        "challenges.id"), primary_key=True)
 
 
 Base.metadata.create_all(bind=engine)
@@ -129,18 +139,18 @@ User.notifications = relationship("Notification", back_populates="recipient")
 class Comment(Base):
     __tablename__ = "comments"
 
-    id = Column(Integer, Sequence("comments_id_seq"), primary_key=True, index=True)
+    id = Column(Integer, Sequence("comments_id_seq"),
+                primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     comment = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
-
-    user = relationship("User", back_populates="comments")
 
 
 class ChallengeComment(Base):
     __tablename__ = "challangecomment"
 
-    challenge_id = Column(Integer, ForeignKey("challenges.id"), primary_key=True)
+    challenge_id = Column(Integer, ForeignKey(
+        "challenges.id"), primary_key=True)
     comment_id = Column(Integer, ForeignKey("comments.id"), primary_key=True)
 
 
