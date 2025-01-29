@@ -17,6 +17,9 @@ CREATE SEQUENCE tag_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
 DROP SEQUENCE IF EXISTS notification_id_seq CASCADE;
 CREATE SEQUENCE notification_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
 
+DROP SEQUENCE IF EXISTS comments_id_seq CASCADE;
+CREATE SEQUENCE comments_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
 DROP TABLE IF EXISTS "friends" CASCADE;
 DROP TABLE IF EXISTS "userbadge" CASCADE;
 DROP TABLE IF EXISTS "userchallenge" CASCADE;
@@ -28,6 +31,30 @@ DROP TABLE IF EXISTS "challenges" CASCADE;
 DROP TABLE IF EXISTS "resources" CASCADE;
 DROP TABLE IF EXISTS "tags" CASCADE;
 DROP TABLE IF EXISTS "users" CASCADE;
+
+DROP TABLE IF EXISTS "comments" CASCADE;
+DROP TABLE IF EXISTS "challangecomment" CASCADE;
+DROP TABLE IF EXISTS "resourcecomment" CASCADE;
+
+CREATE TABLE "public"."comments" (
+    "id" integer DEFAULT nextval('comments_id_seq') NOT NULL,
+    "user_id" integer NOT NULL,
+    "comment" character varying(255) NOT NULL,
+    "created_at" timestamp DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "comments_pkey" PRIMARY KEY ("id")
+) WITH (oids = false);
+
+CREATE TABLE "public"."challangecomment" (
+    "challenge_id" integer NOT NULL,
+    "comment_id" integer NOT NULL,
+    CONSTRAINT "challangecomment_pkey" PRIMARY KEY ("challenge_id", "comment_id")
+) WITH (oids = false);
+
+CREATE TABLE "public"."resourcecomment" (
+    "resource_id" integer NOT NULL,
+    "comment_id" integer NOT NULL,
+    CONSTRAINT "resourcecomment_pkey" PRIMARY KEY ("resource_id", "comment_id")
+) WITH (oids = false);
 
 CREATE TABLE "public"."badges" (
     "id" integer DEFAULT nextval('badge_id_seq') NOT NULL,
@@ -134,6 +161,15 @@ ALTER TABLE ONLY "public"."resourcetag" ADD CONSTRAINT "resourcetag_resource_id_
 ALTER TABLE ONLY "public"."resourcetag" ADD CONSTRAINT "resourcetag_tag_id_fkey" FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE NOT DEFERRABLE;
 
 ALTER TABLE ONLY "public"."notifications" ADD CONSTRAINT "notification_recipient_id_fkey" FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
+
+ALTER TABLE ONLY "public"."challangecomment" ADD CONSTRAINT "challangecomment_challenge_id_fkey" FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE ONLY "public"."challangecomment" ADD CONSTRAINT "challangecomment_comment_id_fkey" FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE NOT DEFERRABLE;
+
+ALTER TABLE ONLY "public"."resourcecomment" ADD CONSTRAINT "resourcecomment_comment_id_fkey" FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE ONLY "public"."resourcecomment" ADD CONSTRAINT "resourcecomment_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE NOT DEFERRABLE;
+
+ALTER TABLE ONLY "public"."comments" ADD CONSTRAINT "comments_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
+
 
 INSERT INTO badges (title, description) VALUES 
 ('Beginner Badge', 'Awarded for starting out'),
@@ -316,6 +352,24 @@ INSERT INTO tags (name) VALUES
 ('Python'),
 ('JavaScript'),
 ('Go');
+
+-- Insert comments
+INSERT INTO comments (user_id, comment) VALUES
+(1, 'This is a great challenge!'),
+(2, 'I found this problem quite challenging.'),
+(3, 'I enjoyed solving this problem.');
+
+-- Associate comments with challenges
+INSERT INTO challangecomment (challenge_id, comment_id) VALUES
+((SELECT id FROM challenges WHERE title = 'Palindrome'), (SELECT id FROM comments WHERE comment = 'This is a great challenge!')),
+((SELECT id FROM challenges WHERE title = 'Longest Substring Without Repeating Characters'), (SELECT id FROM comments WHERE comment = 'I found this problem quite challenging.')),
+((SELECT id FROM challenges WHERE title = 'Longest valid parantheses'), (SELECT id FROM comments WHERE comment = 'I enjoyed solving this problem.'));
+
+-- Associate comments with resources
+INSERT INTO resourcecomment (resource_id, comment_id) VALUES
+((SELECT id FROM resources WHERE title = 'Understanding Palindromes'), (SELECT id FROM comments WHERE comment = 'This is a great challenge!')),
+((SELECT id FROM resources WHERE title = 'Optimizing String Manipulations'), (SELECT id FROM comments WHERE comment = 'I found this problem quite challenging.')),
+((SELECT id FROM resources WHERE title = 'Mastering Parentheses Problems'), (SELECT id FROM comments WHERE comment = 'I enjoyed solving this problem.'));
 
 -- Associate tags with challenges
 INSERT INTO challengetag (challenge_id, tag_id) VALUES

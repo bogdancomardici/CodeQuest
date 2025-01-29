@@ -15,7 +15,9 @@ from models import (
     Friend,
     Resource,
     UserBadge,
-    UserChallenge,
+    Comment,
+    ChallengeComment,
+    ResourceComment,
 )
 from schemas import (
     CodeSubmissionStatus,
@@ -36,7 +38,14 @@ from schemas import (
     CodeSubmission,
     CodeSubmissionResult,
     NotificationCreate,
-    NotificationRead
+    NotificationRead,
+    CommentCreate,
+    CommentRead,
+    CommentUpdate,
+    ChallengeCommentCreate,
+    ChallengeCommentRead,
+    ResourceCommentCreate,
+    ResourceCommentRead,
 )
 import requests
 import base64
@@ -94,8 +103,7 @@ def read_root():
 
 @app.post("/users/", response_model=UserRead)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    hashed_password = bcrypt.hashpw(
-        user.password.encode("utf-8"), bcrypt.gensalt())
+    hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt())
     db_user = User(
         username=user.username,
         email=user.email,
@@ -115,12 +123,14 @@ def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
 
 
 @app.post("/notifications/", response_model=NotificationRead)
-def create_notification(notification: NotificationCreate, db: Session = Depends(get_db)):
+def create_notification(
+    notification: NotificationCreate, db: Session = Depends(get_db)
+):
     db_notification = Notification(
         recipient_id=notification.recipient_id,
         message=notification.message,
         link=notification.link,
-        challenger_username=notification.challenger_username
+        challenger_username=notification.challenger_username,
     )
     db.add(db_notification)
     db.commit()
@@ -130,15 +140,17 @@ def create_notification(notification: NotificationCreate, db: Session = Depends(
 
 @app.get("/users/{user_id}/notifications", response_model=List[NotificationRead])
 def get_notifications(user_id: int, db: Session = Depends(get_db)):
-    notifications = db.query(Notification).filter(
-        Notification.recipient_id == user_id).all()
+    notifications = (
+        db.query(Notification).filter(Notification.recipient_id == user_id).all()
+    )
     return notifications
 
 
 @app.delete("/notifications/{notification_id}", response_model=NotificationRead)
 def delete_notification(notification_id: int, db: Session = Depends(get_db)):
-    notification = db.query(Notification).filter(
-        Notification.id == notification_id).first()
+    notification = (
+        db.query(Notification).filter(Notification.id == notification_id).first()
+    )
     if notification is None:
         raise HTTPException(status_code=404, detail="Notification not found")
     db.delete(notification)
@@ -151,8 +163,7 @@ def get_users_ordered_by_points(
     skip: int = 0, limit: int = 5, db: Session = Depends(get_db)
 ):
     db_users = (
-        db.query(User).order_by(User.score.desc()
-                                ).offset(skip).limit(limit).all()
+        db.query(User).order_by(User.score.desc()).offset(skip).limit(limit).all()
     )
     return db_users
 
@@ -179,8 +190,9 @@ def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     for key, value in user.dict(exclude_unset=True).items():
         if key == "password":
-            value = bcrypt.hashpw(value.encode("utf-8"),
-                                  bcrypt.gensalt()).decode("utf-8")
+            value = bcrypt.hashpw(value.encode("utf-8"), bcrypt.gensalt()).decode(
+                "utf-8"
+            )
         setattr(db_user, key, value)
     db.commit()
     db.refresh(db_user)
@@ -199,10 +211,15 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/users/{user_id}/friends", response_model=List[UserRead])
 def get_friends(user_id: int, db: Session = Depends(get_db)):
-    friends = db.query(User).join(Friend, (Friend.user_id1 == User.id) | (Friend.user_id2 == User.id)).filter(
-        ((Friend.user_id1 == user_id) |
-         (Friend.user_id2 == user_id)) & (User.id != user_id)
-    ).all()
+    friends = (
+        db.query(User)
+        .join(Friend, (Friend.user_id1 == User.id) | (Friend.user_id2 == User.id))
+        .filter(
+            ((Friend.user_id1 == user_id) | (Friend.user_id2 == user_id))
+            & (User.id != user_id)
+        )
+        .all()
+    )
     return friends
 
 
@@ -224,6 +241,7 @@ def get_user_badges(user_id: int, db: Session = Depends(get_db)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user.badges
+
 
 # Badges
 
@@ -303,7 +321,7 @@ def filter_challenges(
     sort_by: str = "latest",
     language: Optional[str] = None,
     difficulty: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     query = db.query(Challenge)
 
@@ -323,8 +341,7 @@ def filter_challenges(
 
 @app.get("/challenges/{challenge_id}", response_model=ChallengeRead)
 def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
-    db_challenge = db.query(Challenge).filter(
-        Challenge.id == challenge_id).first()
+    db_challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="challenge not found")
     return db_challenge
@@ -334,8 +351,7 @@ def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
 def update_challenge(
     challenge_id: int, ch_update: ChallengeUpdate, db: Session = Depends(get_db)
 ):
-    db_challenge = db.query(Challenge).filter(
-        Challenge.id == challenge_id).first()
+    db_challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="challenge not found")
     for key, value in ch_update.dict(exclude_unset=True).items():
@@ -364,8 +380,7 @@ def read_resources(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
 
 @app.post("/resources/", response_model=ResourceRead)
 def create_resource(resource: ResourceCreate, db: Session = Depends(get_db)):
-    db_resource = Resource(title=resource.title,
-                           description=resource.description)
+    db_resource = Resource(title=resource.title, description=resource.description)
     db.add(db_resource)
     db.commit()
     db.refresh(db_resource)
@@ -373,10 +388,7 @@ def create_resource(resource: ResourceCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/resources/filter", response_model=List[ResourceRead])
-def filter_resources(
-    sort_by: str = "latest",
-    db: Session = Depends(get_db)
-):
+def filter_resources(sort_by: str = "latest", db: Session = Depends(get_db)):
     query = db.query(Resource)
 
     if sort_by == "latest":
@@ -426,8 +438,7 @@ def get_user_badges(user_id: int, db: Session = Depends(get_db)):
         .all()
     )
     if not user_badges:
-        raise HTTPException(
-            status_code=404, detail="No badges found for this user")
+        raise HTTPException(status_code=404, detail="No badges found for this user")
     return user_badges
 
 
@@ -453,12 +464,12 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     if db_user is None or not bcrypt.checkpw(
         user.password.encode("utf-8"), db_user.password.encode("utf-8")
     ):
-        raise HTTPException(
-            status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401, detail="Invalid username or password")
 
     # Fetch notifications for the user
-    notifications = db.query(Notification).filter(
-        Notification.recipient_id == db_user.id).all()
+    notifications = (
+        db.query(Notification).filter(Notification.recipient_id == db_user.id).all()
+    )
     db_user.notifications = notifications
 
     return db_user
@@ -484,20 +495,20 @@ def submit_code(
     db: Session = Depends(get_db),
 ) -> CodeSubmissionResult:
     db_challenge = (
-        db.query(Challenge).filter(Challenge.id ==
-                                   submission.challenge_id).first()
+        db.query(Challenge).filter(Challenge.id == submission.challenge_id).first()
     )
     print("Received Submission:", submission.dict())
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="Challenge not found")
 
     try:
-        code_b64 = base64.b64encode(
-            submission.source_code.encode("utf-8")).decode("utf-8")
-        input_b64 = base64.b64encode(
-            db_challenge.input.encode("utf-8")).decode("utf-8")
-        output_b64 = base64.b64encode(
-            db_challenge.output.encode("utf-8")).decode("utf-8")
+        code_b64 = base64.b64encode(submission.source_code.encode("utf-8")).decode(
+            "utf-8"
+        )
+        input_b64 = base64.b64encode(db_challenge.input.encode("utf-8")).decode("utf-8")
+        output_b64 = base64.b64encode(db_challenge.output.encode("utf-8")).decode(
+            "utf-8"
+        )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Encoding Error: {e}")
 
@@ -520,9 +531,7 @@ def submit_code(
 
     submission_token = create_submission.json().get("token")
     if not submission_token:
-        raise HTTPException(
-            status_code=500, detail="Submission token not received."
-        )
+        raise HTTPException(status_code=500, detail="Submission token not received.")
 
     result = requests.get(
         f"{JUDGE0_URL}/submissions/{submission_token}?base64_encoded=false",
@@ -539,13 +548,11 @@ def submit_code(
 
     # Check for compilation or runtime errors
     if result_data["status"]["id"] != 3:  # Status ID 3 means "Accepted"
-        error_message = base64.b64decode(
-            result_data.get("message", "")).decode("utf-8")
-        stderr = base64.b64decode(
-            result_data.get("stderr", "")).decode("utf-8")
+        error_message = base64.b64decode(result_data.get("message", "")).decode("utf-8")
+        stderr = base64.b64decode(result_data.get("stderr", "")).decode("utf-8")
         raise HTTPException(
             status_code=400,
-            detail=f"Error: {result_data['status']['description']}\nMessage: {error_message}\nStderr: {stderr}"
+            detail=f"Error: {result_data['status']['description']}\nMessage: {error_message}\nStderr: {stderr}",
         )
 
     # Update user score based on problem difficulty
@@ -554,27 +561,34 @@ def submit_code(
     badge_awarded = ""
     if user:
         initial_score = user.score
-        points_awarded = 10 if db_challenge.difficulty == "Easy" else 20 if db_challenge.difficulty == "Medium" else 40
+        points_awarded = (
+            10
+            if db_challenge.difficulty == "Easy"
+            else 20 if db_challenge.difficulty == "Medium" else 40
+        )
         user.score += points_awarded
         db.commit()
         print(
-            f"User {user.id} score updated: {user.score}. Points awarded: {points_awarded}")
+            f"User {user.id} score updated: {user.score}. Points awarded: {points_awarded}"
+        )
 
         # Assign a badge if the user's score was 0 before the update
         if initial_score == 0:
-            first_problem_badge = db.query(Badge).filter(
-                Badge.title == "Beginner Badge").first()
+            first_problem_badge = (
+                db.query(Badge).filter(Badge.title == "Beginner Badge").first()
+            )
             if first_problem_badge:
-                user_badge = UserBadge(
-                    user_id=user.id, badge_id=first_problem_badge.id)
+                user_badge = UserBadge(user_id=user.id, badge_id=first_problem_badge.id)
                 db.add(user_badge)
                 db.commit()
                 badge_awarded = first_problem_badge.title
-                print(
-                    f"User {user.id} awarded badge: {first_problem_badge.title}")
+                print(f"User {user.id} awarded badge: {first_problem_badge.title}")
 
     return {
-        "status": CodeSubmissionStatus(id=result_data["status"]["id"], description=result_data["status"]["description"]),
+        "status": CodeSubmissionStatus(
+            id=result_data["status"]["id"],
+            description=result_data["status"]["description"],
+        ),
         "stdout": result_data.get("stdout", ""),
         "stderr": result_data.get("stderr", "") or "",
         "expected_output": db_challenge.output,
@@ -585,37 +599,48 @@ def submit_code(
         "compile_output": result_data.get("compile_output", "") or "",
         "message": result_data.get("message", "") or "",
         "points_awarded": points_awarded,
-        "badge_awarded": badge_awarded
+        "badge_awarded": badge_awarded,
     }
 
 
-@app.get("/challenges/{challenge_id}/recommended-resources", response_model=List[ResourceRead])
+@app.get(
+    "/challenges/{challenge_id}/recommended-resources",
+    response_model=List[ResourceRead],
+)
 def get_recommended_resources(challenge_id: int, db: Session = Depends(get_db)):
-    db_challenge = db.query(Challenge).filter(
-        Challenge.id == challenge_id).first()
+    db_challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="Challenge not found")
 
     tag_ids = [tag.id for tag in db_challenge.tags]
-    recommended_resources = db.query(Resource).join(
-        ResourceTag).filter(ResourceTag.tag_id.in_(tag_ids)).all()
+    recommended_resources = (
+        db.query(Resource)
+        .join(ResourceTag)
+        .filter(ResourceTag.tag_id.in_(tag_ids))
+        .all()
+    )
     return recommended_resources
 
 
 @app.post("/users/{user_id}/friends", response_model=FriendCreate)
-def add_friend(user_id: int, friend_username: str = Query(...), db: Session = Depends(get_db)):
+def add_friend(
+    user_id: int, friend_username: str = Query(...), db: Session = Depends(get_db)
+):
     friend = db.query(User).filter(User.username == friend_username).first()
     if not friend:
         raise HTTPException(status_code=404, detail="User not found")
 
     if user_id == friend.id:
-        raise HTTPException(
-            status_code=400, detail="Cannot add yourself as a friend")
+        raise HTTPException(status_code=400, detail="Cannot add yourself as a friend")
 
-    existing_friend = db.query(Friend).filter(
-        ((Friend.user_id1 == user_id) & (Friend.user_id2 == friend.id)) |
-        ((Friend.user_id1 == friend.id) & (Friend.user_id2 == user_id))
-    ).first()
+    existing_friend = (
+        db.query(Friend)
+        .filter(
+            ((Friend.user_id1 == user_id) & (Friend.user_id2 == friend.id))
+            | ((Friend.user_id1 == friend.id) & (Friend.user_id2 == user_id))
+        )
+        .first()
+    )
 
     if existing_friend:
         raise HTTPException(status_code=400, detail="Already friends")
@@ -624,3 +649,103 @@ def add_friend(user_id: int, friend_username: str = Query(...), db: Session = De
     db.add(new_friend)
     db.commit()
     return new_friend
+
+
+@app.post("/comments/", response_model=CommentRead)
+def create_comment(comment: CommentCreate, db: Session = Depends(get_db)):
+    db_comment = Comment(user_id=comment.user_id, comment=comment.comment)
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    return db_comment
+
+
+@app.get("/comments/", response_model=List[CommentRead])
+def read_comments(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    comments = db.query(Comment).offset(skip).limit(limit).all()
+    return comments
+
+
+@app.get("/comments/{comment_id}", response_model=CommentRead)
+def read_comment(comment_id: int, db: Session = Depends(get_db)):
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return comment
+
+
+@app.put("/comments/{comment_id}", response_model=CommentRead)
+def update_comment(
+    comment_id: int, comment: CommentUpdate, db: Session = Depends(get_db)
+):
+    db_comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if db_comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    for key, value in comment.dict(exclude_unset=True).items():
+        setattr(db_comment, key, value)
+    db.commit()
+    db.refresh(db_comment)
+    return db_comment
+
+
+@app.get("/challenges/{challenge_id}/comments", response_model=List[CommentRead])
+def get_challenge_comments(challenge_id: int, db: Session = Depends(get_db)):
+    comments = (
+        db.query(Comment)
+        .join(ChallengeComment, ChallengeComment.comment_id == Comment.id)
+        .filter(ChallengeComment.challenge_id == challenge_id)
+        .all()
+    )
+    return comments
+
+
+@app.post(
+    "/challenges/{challenge_id}/comments",
+    response_model=ChallengeCommentRead,
+)
+def add_challenge_comment(
+    challenge_id: int, user_id: int, comment: str, db: Session = Depends(get_db)
+):
+    db_comment = Comment(user_id=user_id, comment=comment)
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    challenge_comment = ChallengeComment(
+        challenge_id=challenge_id, comment_id=db_comment.id
+    )
+    db.add(challenge_comment)
+    db.commit()
+    return challenge_comment
+
+
+@app.get("/resources/{resource_id}/comments", response_model=List[CommentRead])
+def get_resource_comments(resource_id: int, db: Session = Depends(get_db)):
+    comments = (
+        db.query(Comment)
+        .join(ResourceComment, ResourceComment.comment_id == Comment.id)
+        .filter(ResourceComment.resource_id == resource_id)
+        .all()
+    )
+    return comments
+
+
+@app.post("/resources/{resource_id}/comments", response_model=ResourceCommentRead)
+def add_resource_comment(
+    resource_id: int, user_id: int, comment: str, db: Session = Depends(get_db)
+):
+    db_comment = Comment(user_id=user_id, comment=comment)
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    resource_comment = ResourceComment(
+        resource_id=resource_id, comment_id=db_comment.id
+    )
+    db.add(resource_comment)
+    db.commit()
+    return resource_comment
+
+
+@app.get("/users/{user_id}/comments", response_model=List[CommentRead])
+def get_user_comments(user_id: int, db: Session = Depends(get_db)):
+    comments = db.query(Comment).filter(Comment.user_id == user_id).all()
+    return comments
