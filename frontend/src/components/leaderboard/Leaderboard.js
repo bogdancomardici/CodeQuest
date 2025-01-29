@@ -15,7 +15,7 @@ function Leaderboard() {
         const data = await getUsersOrderedByPoints(page * 5, 5);
         setLeaderboard(data);
 
-        if (data.length < 5) {
+        if (data.length <= 5) {
           setIsLastPage(true);
         } else {
           setIsLastPage(false);
@@ -51,6 +51,10 @@ function Leaderboard() {
     }
   };
 
+  const handleItemClick = (username) => {
+    alert(`Viewing profile of ${username}`);
+  };
+
   return (
     <div className="leaderboard-container">
       <div className="grid-layout-leaderboard">
@@ -69,20 +73,14 @@ function Leaderboard() {
             <div className="list-container-leaderboard">
               <ul className="list-leaderboard">
                 {filteredLeaderboard.map((user, index) => (
-                  <li key={user.id} className="list-item-leaderboard">
-                    {/* show the leaderboard position */}
+                  <li
+                    key={user.id}
+                    className="list-item-leaderboard"
+                    onClick={() => handleItemClick(user.username)}
+                  >
                     <span className="username">{user.username}</span>
                     <span className="points">Points: {user.score}</span>
                     <span className="position">{page * 5 + index + 1}</span>
-
-                    <button
-                      className="see-profile-button"
-                      onClick={() =>
-                        alert(`Viewing profile of ${user.username}`)
-                      }
-                    >
-                      See Profile
-                    </button>
                   </li>
                 ))}
                 {placeholders.map((_, index) => (
