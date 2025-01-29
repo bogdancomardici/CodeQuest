@@ -1,4 +1,5 @@
-.user-page-container {
+.user-page-container,
+.loading-container {
   display: flex;
   min-height: 90vh;
   flex-direction: column;

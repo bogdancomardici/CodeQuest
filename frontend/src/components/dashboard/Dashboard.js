@@ -57,7 +57,7 @@ function Dashboard() {
   }, [user]);
 
   if (loading) {
-    return <div>Loading dashboard...</div>;
+    return <div className="loading-container"></div>;
   }
 
   if (error) {

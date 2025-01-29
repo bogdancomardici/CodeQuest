@@ -169,7 +169,7 @@ function UsersPage() {
   );
 
   if (loading) {
-    return <div>Loading user profile...</div>;
+    return <div className="loading-container"></div>;
   }
 
   if (error) {
