@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   addResources,
@@ -27,7 +27,7 @@ function Resources() {
   const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
 
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     try {
       const data = await getResourcesWithPagination(page * 5, 5);
 
@@ -46,11 +46,11 @@ function Resources() {
     } catch (error) {
       console.error("Error fetching resources:", error);
     }
-  };
+  }, [page]);
 
   useEffect(() => {
     fetchResources();
-  }, [page]);
+  }, [page, fetchResources]);
 
   useEffect(() => {
     const filtered = resources.filter(
