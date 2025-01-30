@@ -40,6 +40,7 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     role: Optional[str] = None
     score: Optional[int] = None
+    reward_points: Optional[int] = None
 
 
 class UserLogin(BaseModel):
