@@ -232,3 +232,8 @@
 .delete-button:hover {
   background-color: #c82333;
 }
+
+Button:hover {
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}

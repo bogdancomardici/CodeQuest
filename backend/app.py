@@ -1,4 +1,5 @@
-from schemas import NotificationCreate, NotificationRead
+from datetime import datetime
+from schemas import NotificationCreate, NotificationRead, PurchaseCreate, PurchaseRead
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Query
 from typing import List, Optional
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from models import (
     Base,
     Notification,
+    Purchase,
     ResourceTag,
     engine,
     SessionLocal,
@@ -386,8 +388,11 @@ def read_resources(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
 
 @app.post("/resources/", response_model=ResourceRead)
 def create_resource(resource: ResourceCreate, db: Session = Depends(get_db)):
-    db_resource = Resource(title=resource.title,
-                           description=resource.description)
+    db_resource = Resource(
+        title=resource.title,
+        description=resource.description,
+        reward_points=resource.reward_points
+    )
     db.add(db_resource)
     db.commit()
     db.refresh(db_resource)
@@ -815,3 +820,46 @@ def delete_friend(user_id: int, friend_username: str = Query(...), db: Session =
     db.delete(existing_friend)
     db.commit()
     return existing_friend
+
+
+@app.post("/purchases/", response_model=PurchaseRead)
+def create_purchase(purchase: PurchaseCreate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == purchase.user_id).first()
+    resource = db.query(Resource).filter(
+        Resource.id == purchase.resource_id).first()
+
+    if not user or not resource:
+        raise HTTPException(
+            status_code=404, detail="User or Resource not found")
+
+    if user.reward_points < resource.reward_points:
+        raise HTTPException(status_code=400, detail="Not enough reward points")
+
+    user.reward_points -= resource.reward_points
+    new_purchase = Purchase(user_id=purchase.user_id,
+                            resource_id=purchase.resource_id)
+    db.add(new_purchase)
+    db.commit()
+    db.refresh(new_purchase)
+    return new_purchase
+
+
+@app.get("/users/{user_id}/purchases", response_model=List[PurchaseRead])
+def read_purchases(user_id: int, db: Session = Depends(get_db)):
+    purchases = db.query(Purchase).filter(Purchase.user_id == user_id).all()
+    purchased_resource_ids = [purchase.resource_id for purchase in purchases]
+
+    # Include free resources
+    free_resources = db.query(Resource).filter(
+        Resource.reward_points == 0).all()
+
+    for resource in free_resources:
+        print(
+            f"Resource ID: {resource.id}, Title: {resource.title}, Reward Points: {resource.reward_points}")
+        if resource.id not in purchased_resource_ids:
+            purchased_resource_ids.append(resource.id)
+            # Add a dummy purchase for free resources with a default purchase_date
+            purchases.append(Purchase(
+                user_id=user_id, resource_id=resource.id, purchase_date=datetime.utcnow()))
+
+    return purchases

@@ -101,12 +101,14 @@ class ChallengeUpdate(BaseModel):
 class ResourceCreate(BaseModel):
     title: str
     description: str
+    reward_points: int
 
 
 class ResourceRead(BaseModel):
     id: int
     title: str
     description: str
+    reward_points: int
 
     class Config:
         from_attributes = True
@@ -115,6 +117,7 @@ class ResourceRead(BaseModel):
 class ResourceUpdate(BaseModel):
     title: str = None
     description: str = None
+    reward_points: int = None
 
 
 class CodeSubmission(BaseModel):
@@ -269,3 +272,17 @@ class ChallengeCommentUpdate(BaseModel):
 class ResourceCommentUpdate(BaseModel):
     resource_id: int = None
     comment_id: int = None
+
+
+class PurchaseCreate(BaseModel):
+    user_id: int
+    resource_id: int
+
+
+class PurchaseRead(BaseModel):
+    user_id: int
+    resource_id: int
+    purchase_date: datetime
+
+    class Config:
+        from_attributes = True
