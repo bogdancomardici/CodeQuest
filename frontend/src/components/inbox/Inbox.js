@@ -57,7 +57,9 @@ function Inbox({ updateNotifications }) {
                 <ul className="notifications-list">
                   {notifications.map((notification) => (
                     <li key={notification.id} className="notification-item">
-                      <span>{notification.message}</span>
+                      <span class="notification-message">
+                        {notification.message}
+                      </span>
                       <div className="button-container-inbox">
                         <a
                           href={notification.link}

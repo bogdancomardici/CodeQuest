@@ -152,7 +152,7 @@ function Resources() {
                     className="list-item-resources"
                     onClick={() => handleItemClick(resource.id)}
                   >
-                    <span>{resource.title}</span>
+                    <span className="resource-title">{resource.title}</span>
                     {user && user.role === "admin" && (
                       <button
                         className="button-resources delete-button"

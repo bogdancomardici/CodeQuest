@@ -50,7 +50,7 @@
 
 .card-inbox {
   width: 100%;
-  min-width: 600px; /* Ensure consistent width */
+  min-width: 800px; /* Ensure consistent width */
   background: rgba(45, 45, 45, 0.5); /* Darker gray with transparency */
   border-radius: 16px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
@@ -110,6 +110,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
   margin-bottom: 10px;
   min-height: 60px;
+  min-width: 700px;
 }
 
 .notification-item:hover {
@@ -120,17 +121,21 @@
 
 .notification-item span {
   flex: 1;
-  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.notification-message {
+  float: left;
+  margin-left: 0;
 }
 
 .button-container-inbox {
   flex: 2;
   display: flex;
   justify-content: flex-end;
-  max-width: 400px;
+  max-width: 100px;
   gap: 5px;
 }
 
@@ -159,6 +164,7 @@
 .accept-button {
   background-color: #86bc25;
   text-decoration: none; /* Remove underline */
+  margin-right: 4px;
 }
 
 .reject-button {

@@ -136,6 +136,10 @@
   width: 100%; /* Ensure consistent width */
 }
 
+.resource-title {
+  margin-left: 130px;
+}
+
 .list-item-resources {
   display: flex;
   justify-content: space-between;
