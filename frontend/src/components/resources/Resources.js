@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   getAllResources,
   addResources,
   deleteResource,
 } from "../../api/resources";
-
 import { useAuth } from "../authentification/AuthContext";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
@@ -31,11 +31,7 @@ function Resources() {
     reward_points: 0,
   });
   const [selectedResource, setSelectedResource] = useState(null);
-  const [filter, setFilter] = useState({
-    sortBy: "latest",
-  });
   const [purchasedResources, setPurchasedResources] = useState([]);
-
   const [isLastPage, setIsLastPage] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -109,8 +105,10 @@ function Resources() {
 
   const handleDeleteResource = async () => {
     try {
-      await deleteResource(id);
-      setAllResources((prev) => prev.filter((r) => r.id !== id));
+      await deleteResource(selectedResource.id);
+      setAllResources((prev) =>
+        prev.filter((r) => r.id !== selectedResource.id)
+      );
       toast.success("Resource deleted successfully!");
       setShowDeleteModal(false);
     } catch (error) {
@@ -319,21 +317,6 @@ function Resources() {
                     ...prev,
                     reward_points: parseInt(e.target.value, 10),
                   }))
-                }
-              />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.Label>Reward Points</Form.Label>
-              <Form.Control
-                type="number"
-                placeholder="Enter reward points"
-                value={newResource.reward_points}
-                onChange={(e) =>
-                  setNewResource({
-                    ...newResource,
-                    reward_points: parseInt(e.target.value, 10),
-                  })
                 }
               />
             </Form.Group>
