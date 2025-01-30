@@ -902,19 +902,19 @@ def get_reward_timer(user_id: int, db: Session = Depends(get_db)):
                       datetime.now(timezone.utc)).total_seconds() / 3600
     return {"timer": max(0, remaining_time)}
 
-@app.get("/challanges/like/{challenge_id}", response_model=List[ChallengeLike])
+@app.get("/challanges/like/{challenge_id}", response_model=List[ChallengeLikeRead])
 def get_challenge_like(challenge_id: int, db: Session = Depends(get_db)):
     likes = db.query(ChallengeLike).filter(ChallengeLike.challenge_id == challenge_id).all()
     return likes
 
-@app.post("/challanges/like/{challenge_id}", response_model=ChallengeLike)
+@app.post("/challanges/like/{challenge_id}", response_model=ChallengeLikeRead)
 def add_challenge_like(challenge_id: int, user_id: int, db: Session = Depends(get_db)):
     like = ChallengeLike(user_id=user_id, challenge_id=challenge_id)
     db.add(like)
     db.commit()
     return like
 
-@app.delete("/challanges/like/{challenge_id}", response_model=ChallengeLike)
+@app.delete("/challanges/like/{challenge_id}", response_model=ChallengeLikeRead)
 def delete_challenge_like(challenge_id: int, user_id: int, db: Session = Depends(get_db)):
     like = db.query(ChallengeLike).filter(ChallengeLike.challenge_id == challenge_id, ChallengeLike.user_id == user_id).first()
     if like is None:
@@ -923,19 +923,19 @@ def delete_challenge_like(challenge_id: int, user_id: int, db: Session = Depends
     db.commit()
     return like
 
-@app.get("/resources/like/{resource_id}", response_model=List[ResourceLike])
+@app.get("/resources/like/{resource_id}", response_model=List[ResourceLikeRead])
 def get_resource_like(resource_id: int, db: Session = Depends(get_db)):
     likes = db.query(ResourceLike).filter(ResourceLike.resource_id == resource_id).all()
     return likes
 
-@app.post("/resources/like/{resource_id}", response_model=ResourceLike)
+@app.post("/resources/like/{resource_id}", response_model=ResourceLikeRead)
 def add_resource_like(resource_id: int, user_id: int, db: Session = Depends(get_db)):
     like = ResourceLike(user_id=user_id, resource_id=resource_id)
     db.add(like)
     db.commit()
     return like
 
-@app.delete("/resources/like/{resource_id}", response_model=ResourceLike)
+@app.delete("/resources/like/{resource_id}", response_model=ResourceLikeRead)
 def delete_resource_like(resource_id: int, user_id: int, db: Session = Depends(get_db)):
     like = db.query(ResourceLike).filter(ResourceLike.resource_id == resource_id, ResourceLike.user_id == user_id).first()
     if like is None:
