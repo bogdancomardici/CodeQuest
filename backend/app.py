@@ -854,11 +854,8 @@ def read_purchases(user_id: int, db: Session = Depends(get_db)):
         Resource.reward_points == 0).all()
 
     for resource in free_resources:
-        print(
-            f"Resource ID: {resource.id}, Title: {resource.title}, Reward Points: {resource.reward_points}")
         if resource.id not in purchased_resource_ids:
             purchased_resource_ids.append(resource.id)
-            # Add a dummy purchase for free resources with a default purchase_date
             purchases.append(Purchase(
                 user_id=user_id, resource_id=resource.id, purchase_date=datetime.utcnow()))
 

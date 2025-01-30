@@ -222,7 +222,7 @@ function Resources() {
                             setShowBuyModal(true);
                           }}
                         >
-                          Buy for {resource.reward_points} reward points
+                          Buy for {resource.reward_points}
                         </button>
                       )}
                     {user && user.role === "admin" && (
