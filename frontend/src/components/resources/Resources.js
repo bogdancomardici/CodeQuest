@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { addResources, deleteResource } from "../../api/resources";
+import {
+  getAllResources,
+  addResources,
+  deleteResource,
+} from "../../api/resources";
+
 import { useAuth } from "../authentification/AuthContext";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
@@ -11,70 +15,59 @@ import "react-toastify/dist/ReactToastify.css";
 import "./resources.css";
 
 function Resources() {
-  const [resources, setResources] = useState([]);
+  const [allResources, setAllResources] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredResources, setFilteredResources] = useState([]);
+  const [filter, setFilter] = useState({
+    sortBy: "latest",
+  });
   const [page, setPage] = useState(0);
-  const [isLastPage, setIsLastPage] = useState(false);
+  const resourcesPerPage = 5;
   const [showModal, setShowModal] = useState(false);
   const [newResource, setNewResource] = useState({
     title: "",
     description: "",
   });
-  const [filter, setFilter] = useState({
-    sortBy: "latest",
-  });
 
+  const [isLastPage, setIsLastPage] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const fetchResources = useCallback(async () => {
-    try {
-      const response = await axios.get("http://localhost:8000/resources", {
-        params: { skip: page * 5, limit: 5 },
-      });
-      setResources(response.data);
-      setIsLastPage(response.data.length < 5);
-    } catch (error) {
-      console.error("Error fetching resources:", error);
-    }
-  }, [page]);
+  useEffect(() => {
+    const fetchAllResources = async () => {
+      try {
+        const data = await getAllResources();
+        setAllResources(data);
+      } catch (error) {
+        console.error("Error fetching resources:", error);
+      }
+    };
+    fetchAllResources();
+  }, []);
 
-  const fetchFilteredResources = useCallback(async () => {
-    try {
-      const params = {
-        skip: page * 5,
-        limit: 5,
-        sort_by: filter.sortBy,
-      };
-      const response = await axios.get(
-        "http://localhost:8000/resources/filter",
-        { params }
-      );
-      setFilteredResources(response.data);
-      setIsLastPage(response.data.length < 5);
-    } catch (error) {
-      console.error("Error fetching filtered resources:", error);
-    }
-  }, [page, filter]);
+  const filteredSortedResources = useMemo(() => {
+    const filtered = allResources.filter((resource) => {
+      const lowerTitle = resource.title.toLowerCase();
+      const lowerDesc = resource.description.toLowerCase();
+      const lowerSearch = searchTerm.toLowerCase();
+
+      return lowerTitle.includes(lowerSearch) || lowerDesc.includes(lowerSearch);
+    });
+    return filtered.sort((a, b) => {
+      if (filter.sortBy === "latest") {
+        return b.id - a.id;
+      } else {
+        return a.id - b.id;
+      }
+    });
+  }, [allResources, searchTerm, filter]);
+
+  const startIndex = page * resourcesPerPage;
+  const endIndex = startIndex + resourcesPerPage;
+  const currentPageResources = filteredSortedResources.slice(startIndex, endIndex);
 
   useEffect(() => {
-    fetchResources();
-  }, [page, fetchResources]);
-
-  useEffect(() => {
-    fetchFilteredResources();
-  }, [filter, page, fetchFilteredResources]);
-
-  useEffect(() => {
-    setFilteredResources(
-      resources.filter(
-        (resource) =>
-          resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          resource.description.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-  }, [searchTerm, resources]);
+    setIsLastPage(endIndex >= filteredSortedResources.length);
+  }, [endIndex, filteredSortedResources]);
 
   const handleItemClick = (id) => {
     navigate(`/resource/${id}`);
@@ -83,10 +76,7 @@ function Resources() {
   const handleDeleteResource = async (id) => {
     try {
       await deleteResource(id);
-      setResources(resources.filter((resource) => resource.id !== id));
-      setFilteredResources(
-        filteredResources.filter((resource) => resource.id !== id)
-      );
+      setAllResources((prev) => prev.filter((r) => r.id !== id));
       toast.success("Resource deleted successfully!");
     } catch (error) {
       console.error("Error deleting resource:", error);
@@ -104,12 +94,11 @@ function Resources() {
       await addResources(resourceToSubmit);
       toast.success("Resource added successfully!");
       setShowModal(false);
-      setNewResource({
-        title: "",
-        description: "",
-      });
+      setNewResource({ title: "", description: "" });
       setPage(0);
-      fetchResources();
+
+      const updated = await getAllResources();
+      setAllResources(updated);
     } catch (error) {
       console.error("Error adding resources:", error);
       toast.error("Failed to add resource.");
@@ -118,17 +107,20 @@ function Resources() {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilter((prevFilter) => ({
-      ...prevFilter,
-      [name]: value,
-    }));
-    setPage(0); // Reset to the first page when filter changes
+    setFilter((prevFilter) => ({ ...prevFilter, [name]: value }));
+    setPage(0);
+  };
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+    setPage(0);
   };
 
   return (
     <div className="resources-container">
       <div className="grid-layout-resources">
         <div className="grid-item-resources invisible-resources"></div>
+
         <div className="grid-item-resources middle-resources">
           <div className="main-container-resources">
             <div className="search-bar-resources">
@@ -137,7 +129,7 @@ function Resources() {
                 placeholder="Search for resources..."
                 className="search-input-resources"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearch}
               />
               <div className="filter-container">
                 <select
@@ -154,7 +146,7 @@ function Resources() {
 
             <div className="list-container-resources">
               <ul className="list-resources">
-                {filteredResources.map((resource) => (
+                {currentPageResources.map((resource) => (
                   <li
                     key={resource.id}
                     className="list-item-resources"
@@ -175,6 +167,7 @@ function Resources() {
                   </li>
                 ))}
               </ul>
+
               <div className="pagination-controls">
                 <button
                   className="pagination-button"
@@ -192,20 +185,20 @@ function Resources() {
                 </button>
               </div>
             </div>
+
             {user && (user.role === "admin" || user.role === "expert") && (
               <div>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="button-add"
-                >
+                <button onClick={() => setShowModal(true)} className="button-add">
                   Add Resource
                 </button>
               </div>
             )}
           </div>
         </div>
+
         <div className="grid-item-resources invisible-resources"></div>
       </div>
+
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Add New Resource</Modal.Title>
@@ -219,11 +212,10 @@ function Resources() {
                 placeholder="Enter title"
                 value={newResource.title}
                 onChange={(e) =>
-                  setNewResource({ ...newResource, title: e.target.value })
+                  setNewResource((prev) => ({ ...prev, title: e.target.value }))
                 }
               />
             </Form.Group>
-
             <Form.Group>
               <Form.Label>Description</Form.Label>
               <Form.Control
@@ -231,10 +223,10 @@ function Resources() {
                 placeholder="Enter description"
                 value={newResource.description}
                 onChange={(e) =>
-                  setNewResource({
-                    ...newResource,
+                  setNewResource((prev) => ({
+                    ...prev,
                     description: e.target.value,
-                  })
+                  }))
                 }
               />
             </Form.Group>
@@ -249,6 +241,7 @@ function Resources() {
           </Button>
         </Modal.Footer>
       </Modal>
+
       <ToastContainer />
     </div>
   );

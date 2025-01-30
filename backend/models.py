@@ -116,8 +116,6 @@ class UserChallenge(Base):
         "challenges.id"), primary_key=True)
 
 
-Base.metadata.create_all(bind=engine)
-
 
 class Notification(Base):
     __tablename__ = "notifications"
@@ -159,3 +157,5 @@ class ResourceComment(Base):
 
     resource_id = Column(Integer, ForeignKey("resources.id"), primary_key=True)
     comment_id = Column(Integer, ForeignKey("comments.id"), primary_key=True)
+
+Base.metadata.create_all(bind=engine)
