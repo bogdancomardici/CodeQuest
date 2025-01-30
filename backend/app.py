@@ -582,6 +582,7 @@ def submit_code(
             else 20 if db_challenge.difficulty == "Medium" else 40
         )
         user.score += points_awarded
+        user.reward_points += points_awarded
         db.commit()
         print(
             f"User {user.id} score updated: {user.score}. Points awarded: {points_awarded}"

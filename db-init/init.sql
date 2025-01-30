@@ -20,18 +20,42 @@ CREATE SEQUENCE notification_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 C
 DROP SEQUENCE IF EXISTS comments_id_seq CASCADE;
 CREATE SEQUENCE comments_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
 
+DROP SEQUENCE IF EXISTS challangecomment_id_seq CASCADE;
+CREATE SEQUENCE challangecomment_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS resourcecomment_id_seq CASCADE;
+CREATE SEQUENCE resourcecomment_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS userbadge_id_seq CASCADE;
+CREATE SEQUENCE userbadge_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS userchallenge_id_seq CASCADE;
+CREATE SEQUENCE userchallenge_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS challengetag_id_seq CASCADE;
+CREATE SEQUENCE challengetag_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS resourcetag_id_seq CASCADE;
+CREATE SEQUENCE resourcetag_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS friends_id_seq CASCADE;
+CREATE SEQUENCE friends_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+DROP SEQUENCE IF EXISTS purchases_id_seq CASCADE;
+CREATE SEQUENCE purchases_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1;
+
+-- Drop tables if they exist
+DROP TABLE IF EXISTS "purchases" CASCADE;
 DROP TABLE IF EXISTS "friends" CASCADE;
 DROP TABLE IF EXISTS "userbadge" CASCADE;
 DROP TABLE IF EXISTS "userchallenge" CASCADE;
 DROP TABLE IF EXISTS "challengetag" CASCADE;
 DROP TABLE IF EXISTS "notifications" CASCADE;
-
 DROP TABLE IF EXISTS "badges" CASCADE;
 DROP TABLE IF EXISTS "challenges" CASCADE;
 DROP TABLE IF EXISTS "resources" CASCADE;
 DROP TABLE IF EXISTS "tags" CASCADE;
 DROP TABLE IF EXISTS "users" CASCADE;
-
 DROP TABLE IF EXISTS "comments" CASCADE;
 DROP TABLE IF EXISTS "challangecomment" CASCADE;
 DROP TABLE IF EXISTS "resourcecomment" CASCADE;
@@ -106,6 +130,7 @@ CREATE TABLE "public"."resources" (
     "id" integer DEFAULT nextval('resource_id_seq') NOT NULL,
     "title" character varying(50) NOT NULL,
     "description" character varying(2000) NOT NULL,
+    "reward_points" integer DEFAULT '0',
     CONSTRAINT "resource_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "resource_title_key" UNIQUE ("title")
 ) WITH (oids = false);
@@ -129,6 +154,7 @@ CREATE TABLE "public"."users" (
     "password" character varying(255) NOT NULL,
     "role" character varying(20) NOT NULL,
     "score" integer DEFAULT '0',
+    "reward_points" integer DEFAULT '0',
     CONSTRAINT "users_email_key" UNIQUE ("email"),
     CONSTRAINT "users_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "users_username_key" UNIQUE ("username")
@@ -143,6 +169,13 @@ CREATE TABLE "public"."notifications" (
     "created_at" timestamp DEFAULT CURRENT_TIMESTAMP,
     "challenger_username" character varying(50),
     CONSTRAINT "notification_pkey" PRIMARY KEY ("id")
+) WITH (oids = false);
+
+CREATE TABLE "public"."purchases" (
+    "user_id" integer NOT NULL,
+    "resource_id" integer NOT NULL,
+    "purchase_date" timestamp DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "purchases_pkey" PRIMARY KEY ("user_id", "resource_id")
 ) WITH (oids = false);
 
 ALTER TABLE ONLY "public"."friends" ADD CONSTRAINT "friend_user_id1_fkey" FOREIGN KEY (user_id1) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
@@ -170,6 +203,8 @@ ALTER TABLE ONLY "public"."resourcecomment" ADD CONSTRAINT "resourcecomment_reso
 
 ALTER TABLE ONLY "public"."comments" ADD CONSTRAINT "comments_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 
+ALTER TABLE ONLY "public"."purchases" ADD CONSTRAINT "purchases_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE ONLY "public"."purchases" ADD CONSTRAINT "purchases_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE NOT DEFERRABLE;
 
 INSERT INTO badges (title, description) VALUES 
 ('Beginner Badge', 'Awarded for starting out'),

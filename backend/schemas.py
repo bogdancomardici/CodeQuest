@@ -16,6 +16,7 @@ class UserRead(BaseModel):
     email: str
     role: str
     score: int
+    reward_points: int
 
     class Config:
         from_attributes = True

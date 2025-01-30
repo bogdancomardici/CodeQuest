@@ -36,6 +36,7 @@ class User(Base):
     password = Column(String)
     role = Column(String)
     score = Column(Integer, default=0)
+    reward_points = Column(Integer, default=0)
     badges = relationship("Badge", secondary="userbadge",
                           back_populates="users")
 
