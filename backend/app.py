@@ -914,7 +914,7 @@ def add_challenge_like(challenge_id: int, user_id: int, db: Session = Depends(ge
     db.commit()
     return like
 
-@app.delete("/challanges/like/{challenge_id}", response_model=ChallengeLikeRead)
+@app.delete("/challanges/like/", response_model=ChallengeLikeRead)
 def delete_challenge_like(challenge_id: int, user_id: int, db: Session = Depends(get_db)):
     like = db.query(ChallengeLike).filter(ChallengeLike.challenge_id == challenge_id, ChallengeLike.user_id == user_id).first()
     if like is None:
@@ -935,7 +935,7 @@ def add_resource_like(resource_id: int, user_id: int, db: Session = Depends(get_
     db.commit()
     return like
 
-@app.delete("/resources/like/{resource_id}", response_model=ResourceLikeRead)
+@app.delete("/resources/like/", response_model=ResourceLikeRead)
 def delete_resource_like(resource_id: int, user_id: int, db: Session = Depends(get_db)):
     like = db.query(ResourceLike).filter(ResourceLike.resource_id == resource_id, ResourceLike.user_id == user_id).first()
     if like is None:
