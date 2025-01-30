@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "../authentification/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
+import Wheel from "../wheel/Wheel";
 import "./inbox.css";
 
 function Inbox({ updateNotifications }) {
@@ -12,12 +13,31 @@ function Inbox({ updateNotifications }) {
   const [notifications, setNotifications] = useState([]);
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [rewardTimer, setRewardTimer] = useState(null);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [rewardPoints, setRewardPoints] = useState(null);
-  const wheelRef = useRef(null);
 
-  const rewards = [5, 10, 15, 20, 25, 50, 75, 100, 5, 10]; // Reward points for each slice
-  const sliceDegrees = 360 / rewards.length; // Degrees for each slice
+  const rewards = [
+    "5 points",
+    "10 points",
+    "15 points",
+    "20 points",
+    "25 points",
+    "50 points",
+    "75 points",
+    "100 points",
+    "5 points",
+    "10 points",
+  ];
+  const segColors = [
+    "#FF5733",
+    "#33FF57",
+    "#FF5733",
+    "#33FF57",
+    "#FF5733",
+    "#33FF57",
+    "#FF5733",
+    "#33FF57",
+    "#FF5733",
+    "#33FF57",
+  ];
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -70,33 +90,21 @@ function Inbox({ updateNotifications }) {
     setShowRewardModal(true);
   };
 
-  const handleSpinWheel = () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
+  const onFinished = async (winner) => {
+    const reward = parseInt(winner.split(" ")[0]);
+    toast.success(`Congratulations! You got ${reward} reward points!`);
+    setShowRewardModal(false);
 
-    const randomSlice = Math.floor(Math.random() * rewards.length);
-    const reward = rewards[randomSlice];
-    const degrees = 360 * 5 + randomSlice * sliceDegrees;
-
-    wheelRef.current.style.transition = "transform 5s ease-out";
-    wheelRef.current.style.transform = `rotate(${degrees}deg)`;
-
-    setTimeout(() => {
-      setIsSpinning(false);
-      toast.success(`Congratulations! You got ${reward} reward points!`);
-      setShowRewardModal(false);
-
-      // Update reward points in the backend
-      axios
-        .post(`http://localhost:8000/users/${user.id}/reward`, {
-          points: reward,
-        })
-        .then(() => fetchRewardTimer())
-        .catch((error) => {
-          console.error("Error updating reward points:", error);
-          toast.error("Failed to update reward points.");
-        });
-    }, 5000);
+    // Update reward points in the backend
+    try {
+      await axios.post(`http://localhost:8000/users/${user.id}/reward`, {
+        points: reward,
+      });
+      fetchRewardTimer();
+    } catch (error) {
+      console.error("Error updating reward points:", error);
+      toast.error("Failed to update reward points.");
+    }
   };
 
   return (
@@ -174,34 +182,16 @@ function Inbox({ updateNotifications }) {
         </Modal.Header>
         <Modal.Body>
           <div className="wheel-container">
-            <div className="wheel" ref={wheelRef}>
-              {rewards.map((reward, index) => (
-                <div
-                  key={index}
-                  className="slice"
-                  style={{
-                    transform: `rotate(${index * sliceDegrees}deg) skewY(-${
-                      90 - sliceDegrees
-                    }deg)`,
-                  }}
-                >
-                  <span>{reward}</span>
-                </div>
-              ))}
-            </div>
-            <div className="pin"></div>
+            <Wheel
+              segments={rewards}
+              segColors={segColors}
+              onFinished={onFinished}
+            />
           </div>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowRewardModal(false)}>
             Close
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSpinWheel}
-            disabled={isSpinning}
-          >
-            Spin the Wheel
           </Button>
         </Modal.Footer>
       </Modal>
