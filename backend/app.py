@@ -798,6 +798,15 @@ def get_user_comments(user_id: int, db: Session = Depends(get_db)):
     comments = db.query(Comment).filter(Comment.user_id == user_id).all()
     return comments
 
+@app.delete("/comments/{comment_id}", response_model=CommentRead)
+def delete_comment(comment_id: int, db: Session = Depends(get_db)):
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    db.delete(comment)
+    db.commit()
+    return comment
+
 
 @app.delete("/users/{user_id}/friends", response_model=FriendCreate)
 def delete_friend(user_id: int, friend_username: str = Query(...), db: Session = Depends(get_db)):
