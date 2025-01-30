@@ -17,6 +17,7 @@ class UserRead(BaseModel):
     role: str
     score: int
     reward_points: int
+    reward_timer: datetime
 
     class Config:
         from_attributes = True
@@ -41,6 +42,7 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     score: Optional[int] = None
     reward_points: Optional[int] = None
+    reward_timer: Optional[datetime] = None
 
 
 class UserLogin(BaseModel):

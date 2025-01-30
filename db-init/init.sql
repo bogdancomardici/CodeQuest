@@ -155,6 +155,7 @@ CREATE TABLE "public"."users" (
     "role" character varying(20) NOT NULL,
     "score" integer DEFAULT '0',
     "reward_points" integer DEFAULT '0',
+    "reward_timer" timestamp with time zone DEFAULT now(), 
     CONSTRAINT "users_email_key" UNIQUE ("email"),
     CONSTRAINT "users_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "users_username_key" UNIQUE ("username")
@@ -373,10 +374,10 @@ INSERT INTO resources (title, description) VALUES
  - Testing techniques for robust code.' 
 );
 
-INSERT INTO users (username, email, password, role, score) VALUES
-('user1', 'user1@example.com', '$2y$10$SRGvDkhxmYo/jtIccmmHK.LAeULCdfhnTgu63i0z/a8cCj3/sBZsG', 'admin', 100),
-('user2', 'user2@example.com', 'hashed_password2', 'user', 50),
-('user3', 'user3@example.com', 'hashed_password3', 'user', 75);
+INSERT INTO users (username, email, password, role, score, reward_points, reward_timer) VALUES
+('user1', 'user1@example.com', '$2y$10$SRGvDkhxmYo/jtIccmmHK.LAeULCdfhnTgu63i0z/a8cCj3/sBZsG', 'admin', 100, 0, now()),
+('user2', 'user2@example.com', 'hashed_password2', 'user', 50, 0, now()),
+('user3', 'user3@example.com', 'hashed_password3', 'user', 75, 0, now());
 
 -- Insert tags
 INSERT INTO tags (name) VALUES 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from schemas import NotificationCreate, NotificationRead, PurchaseCreate, PurchaseRead
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Query
@@ -860,3 +860,28 @@ def read_purchases(user_id: int, db: Session = Depends(get_db)):
                 user_id=user_id, resource_id=resource.id, purchase_date=datetime.utcnow()))
 
     return purchases
+
+
+@app.post("/users/{user_id}/reward")
+def update_reward_points(user_id: int, points: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.reward_points += points
+    # Reset the reward timer to 24 hours from now
+    user.reward_timer = datetime.now(timezone.utc) + timedelta(hours=24)
+    db.commit()
+    return {"message": "Reward points updated successfully", "points": points}
+
+
+@app.get("/users/{user_id}/reward-timer")
+def get_reward_timer(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Calculate the remaining time for the reward timer
+    remaining_time = (user.reward_timer -
+                      datetime.now(timezone.utc)).total_seconds() / 3600
+    return {"timer": max(0, remaining_time)}

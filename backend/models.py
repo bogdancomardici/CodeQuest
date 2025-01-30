@@ -37,6 +37,7 @@ class User(Base):
     role = Column(String)
     score = Column(Integer, default=0)
     reward_points = Column(Integer, default=0)
+    reward_timer = Column(DateTime, default=datetime.utcnow)
     badges = relationship("Badge", secondary="userbadge",
                           back_populates="users")
 
