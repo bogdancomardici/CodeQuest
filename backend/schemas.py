@@ -288,3 +288,45 @@ class PurchaseRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ResourceLikeCreate(BaseModel):
+    user_id: int
+    resource_id: int
+
+
+class ResourceLikeRead(BaseModel):
+    user_id: int
+    resource_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ResourceLikeDelete(BaseModel):
+    user_id: int
+    resource_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ChallengeLikeCreate(BaseModel):
+    user_id: int
+    challenge_id: int
+
+
+class ChallengeLikeRead(BaseModel):
+    user_id: int
+    challenge_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ChallengeLikeDelete(BaseModel):
+    user_id: int
+    challenge_id: int
+
+    class Config:
+        from_attributes = True
