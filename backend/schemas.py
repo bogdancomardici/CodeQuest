@@ -25,13 +25,15 @@ class UserRead(BaseModel):
 class UserChallengeRead(BaseModel):
     user_id: int
     challenge_id: int
-
+    solution: str
+    
     class Config:
         from_attributes = True
 
 class UserChallengeCreate(BaseModel):
     user_id: int
     challenge_id: int
+    solution: str
 
     class Config:
         from_attributes = True

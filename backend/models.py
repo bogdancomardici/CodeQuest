@@ -117,6 +117,7 @@ class UserChallenge(Base):
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     challenge_id = Column(Integer, ForeignKey(
         "challenges.id"), primary_key=True)
+    solution = Column(String)
 
 
 class Notification(Base):

@@ -960,9 +960,18 @@ def get_user_challenges(user_id: int, db: Session = Depends(get_db)):
     return user_challenges
 
 @app.post("/users/challenges/", response_model=UserChallengeRead)
-def add_user_challenge(user_id: int, challenge_id: int, db: Session = Depends(get_db)):
-    user_challenge = UserChallenge(user_id=user_id, challenge_id=challenge_id)
+def add_user_challenge(user_id: int, challenge_id: int, solution: str, db: Session = Depends(get_db)):
+    user_challenge = UserChallenge(user_id=user_id, challenge_id=challenge_id, solution=solution)
     db.add(user_challenge)
+    db.commit()
+    return user_challenge
+
+@app.put("/users/challenges/", response_model=UserChallengeRead)
+def update_user_challenge(user_id: int, challenge_id: int, solution: str, db: Session = Depends(get_db)):
+    user_challenge = db.query(UserChallenge).filter(UserChallenge.user_id == user_id, UserChallenge.challenge_id == challenge_id).first()
+    if user_challenge is None:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    user_challenge.solution = solution
     db.commit()
     return user_challenge
 

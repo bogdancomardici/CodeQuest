@@ -158,6 +158,7 @@ CREATE TABLE "public"."userbadge" (
 CREATE TABLE "public"."userchallenge" (
     "user_id" integer NOT NULL,
     "challenge_id" integer NOT NULL,
+    "solution" character varying(5000) NOT NULL,
     CONSTRAINT "userchallenge_pkey" PRIMARY KEY ("user_id", "challenge_id")
 ) WITH (oids = false);
 
