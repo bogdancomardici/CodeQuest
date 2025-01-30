@@ -21,8 +21,8 @@ from models import (
     ChallengeComment,
     ResourceComment,
     ChallengeLike,
-    ResourceLike
-
+    ResourceLike,
+    UserChallenge
 )
 from schemas import (
     CodeSubmissionStatus,
@@ -54,7 +54,9 @@ from schemas import (
     ChallengeLikeCreate,
     ChallengeLikeRead,
     ResourceLikeCreate,
-    ResourceLikeRead
+    ResourceLikeRead,
+    UserChallengeCreate,
+    UserChallengeRead,
 )
 import requests
 import base64
@@ -952,4 +954,24 @@ def get_user_likes(user_id: int, db: Session = Depends(get_db)):
     }
     return user_likes
 
+@app.get("/users/challenges/", response_model=List[UserChallengeRead])
+def get_user_challenges(user_id: int, db: Session = Depends(get_db)):
+    user_challenges = db.query(UserChallenge).filter(UserChallenge.user_id == user_id).all()
+    return user_challenges
+
+@app.post("/users/challenges/", response_model=UserChallengeRead)
+def add_user_challenge(user_id: int, challenge_id: int, db: Session = Depends(get_db)):
+    user_challenge = UserChallenge(user_id=user_id, challenge_id=challenge_id)
+    db.add(user_challenge)
+    db.commit()
+    return user_challenge
+
+@app.delete("/users/challenges/", response_model=UserChallengeRead)
+def delete_user_challenge(user_id: int, challenge_id: int, db: Session = Depends(get_db)):
+    user_challenge = db.query(UserChallenge).filter(UserChallenge.user_id == user_id, UserChallenge.challenge_id == challenge_id).first()
+    if user_challenge is None:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    db.delete(user_challenge)
+    db.commit()
+    return user_challenge
 
