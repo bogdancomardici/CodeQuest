@@ -59,6 +59,20 @@ DROP TABLE IF EXISTS "users" CASCADE;
 DROP TABLE IF EXISTS "comments" CASCADE;
 DROP TABLE IF EXISTS "challangecomment" CASCADE;
 DROP TABLE IF EXISTS "resourcecomment" CASCADE;
+DROP TABLE IF EXISTS "challangelikes" CASCADE;
+DROP TABLE IF EXISTS "resourcelikes" CASCADE;
+
+CREATE TABLE "public"."challangelikes" (
+    "challenge_id" integer NOT NULL,
+    "user_id" integer NOT NULL,
+    CONSTRAINT "challangelikes_pkey" PRIMARY KEY ("challenge_id", "user_id")
+) WITH (oids = false);
+
+CREATE TABLE "public"."resourcelikes" (
+    "resource_id" integer NOT NULL,
+    "user_id" integer NOT NULL,
+    CONSTRAINT "resourcelikes_pkey" PRIMARY KEY ("resource_id", "user_id")
+) WITH (oids = false);
 
 CREATE TABLE "public"."comments" (
     "id" integer DEFAULT nextval('comments_id_seq') NOT NULL,
@@ -206,6 +220,12 @@ ALTER TABLE ONLY "public"."comments" ADD CONSTRAINT "comments_user_id_fkey" FORE
 
 ALTER TABLE ONLY "public"."purchases" ADD CONSTRAINT "purchases_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 ALTER TABLE ONLY "public"."purchases" ADD CONSTRAINT "purchases_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE NOT DEFERRABLE;
+
+ALTER TABLE ONLY "public"."challangelikes" ADD CONSTRAINT "challangelikes_challenge_id_fkey" FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE ONLY "public"."challangelikes" ADD CONSTRAINT "challangelikes_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
+
+ALTER TABLE ONLY "public"."resourcelikes" ADD CONSTRAINT "resourcelikes_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE NOT DEFERRABLE;
+ALTER TABLE ONLY "public"."resourcelikes" ADD CONSTRAINT "resourcelikes_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT DEFERRABLE;
 
 INSERT INTO badges (title, description) VALUES 
 ('Beginner Badge', 'Awarded for starting out'),
