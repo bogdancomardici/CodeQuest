@@ -20,6 +20,9 @@ from models import (
     Comment,
     ChallengeComment,
     ResourceComment,
+    ChallengeLike,
+    ResourceLike
+
 )
 from schemas import (
     CodeSubmissionStatus,
@@ -48,6 +51,10 @@ from schemas import (
     ChallengeCommentRead,
     ResourceCommentCreate,
     ResourceCommentRead,
+    ChallengeLikeCreate,
+    ChallengeLikeRead,
+    ResourceLikeCreate,
+    ResourceLikeRead
 )
 import requests
 import base64
@@ -894,3 +901,55 @@ def get_reward_timer(user_id: int, db: Session = Depends(get_db)):
     remaining_time = (user.reward_timer -
                       datetime.now(timezone.utc)).total_seconds() / 3600
     return {"timer": max(0, remaining_time)}
+
+@app.get("/challanges/like/{challenge_id}", response_model=List[ChallengeLike])
+def get_challenge_like(challenge_id: int, db: Session = Depends(get_db)):
+    likes = db.query(ChallengeLike).filter(ChallengeLike.challenge_id == challenge_id).all()
+    return likes
+
+@app.post("/challanges/like/{challenge_id}", response_model=ChallengeLike)
+def add_challenge_like(challenge_id: int, user_id: int, db: Session = Depends(get_db)):
+    like = ChallengeLike(user_id=user_id, challenge_id=challenge_id)
+    db.add(like)
+    db.commit()
+    return like
+
+@app.delete("/challanges/like/{challenge_id}", response_model=ChallengeLike)
+def delete_challenge_like(challenge_id: int, user_id: int, db: Session = Depends(get_db)):
+    like = db.query(ChallengeLike).filter(ChallengeLike.challenge_id == challenge_id, ChallengeLike.user_id == user_id).first()
+    if like is None:
+        raise HTTPException(status_code=404, detail="Like not found")
+    db.delete(like)
+    db.commit()
+    return like
+
+@app.get("/resources/like/{resource_id}", response_model=List[ResourceLike])
+def get_resource_like(resource_id: int, db: Session = Depends(get_db)):
+    likes = db.query(ResourceLike).filter(ResourceLike.resource_id == resource_id).all()
+    return likes
+
+@app.post("/resources/like/{resource_id}", response_model=ResourceLike)
+def add_resource_like(resource_id: int, user_id: int, db: Session = Depends(get_db)):
+    like = ResourceLike(user_id=user_id, resource_id=resource_id)
+    db.add(like)
+    db.commit()
+    return like
+
+@app.delete("/resources/like/{resource_id}", response_model=ResourceLike)
+def delete_resource_like(resource_id: int, user_id: int, db: Session = Depends(get_db)):
+    like = db.query(ResourceLike).filter(ResourceLike.resource_id == resource_id, ResourceLike.user_id == user_id).first()
+    if like is None:
+        raise HTTPException(status_code=404, detail="Like not found")
+    db.delete(like)
+    db.commit()
+    return like
+
+@app.get("/users/{user_id}/likes")
+def get_user_likes(user_id: int, db: Session = Depends(get_db)):
+    user_likes = {
+        "challenges": db.query(ChallengeLike).filter(ChallengeLike.user_id == user_id).all(),
+        "resources": db.query(ResourceLike).filter(ResourceLike.user_id == user_id).all()
+    }
+    return user_likes
+
+
