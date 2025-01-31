@@ -13,6 +13,7 @@ function Inbox() {
   const [notifications, setNotifications] = useState([]);
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [rewardTimer, setRewardTimer] = useState(null);
+  const [remainingTime, setRemainingTime] = useState(0);
 
   const rewards = [
     "5 points",
@@ -56,7 +57,9 @@ function Inbox() {
       const response = await axios.get(
         `http://localhost:8000/users/${user.id}/reward-timer`
       );
-      setRewardTimer(response.data.timer);
+      const timerInSeconds = Math.floor(response.data.timer * 3600);
+      setRewardTimer(timerInSeconds);
+      setRemainingTime(timerInSeconds);
     } catch (error) {
       console.error("Error fetching reward timer:", error);
     }
@@ -68,6 +71,14 @@ function Inbox() {
       fetchRewardTimer();
     }
   }, [user, fetchNotifications, fetchRewardTimer]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRemainingTime((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDeleteNotification = async (notificationId) => {
     try {
@@ -106,8 +117,7 @@ function Inbox() {
     }
   };
 
-  const formatTime = (timeInHours) => {
-    const totalSeconds = Math.floor(timeInHours * 3600);
+  const formatTime = (totalSeconds) => {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
@@ -130,11 +140,13 @@ function Inbox() {
                 <ul className="notifications-list">
                   <li className="notification-item">
                     <span className="notification-message">
-                      {rewardTimer !== null && rewardTimer > 0
-                        ? `Next reward available in ${formatTime(rewardTimer)}`
+                      {remainingTime > 0
+                        ? `Next reward available in ${formatTime(
+                            remainingTime
+                          )}`
                         : "Daily Reward Available! Click to spin the wheel."}
                     </span>
-                    {rewardTimer !== null && rewardTimer <= 0 && (
+                    {remainingTime <= 0 && (
                       <button
                         className="button-inbox reward-button"
                         onClick={handleDailyRewardClick}
