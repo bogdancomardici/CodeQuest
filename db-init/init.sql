@@ -61,6 +61,8 @@ DROP TABLE IF EXISTS "challangecomment" CASCADE;
 DROP TABLE IF EXISTS "resourcecomment" CASCADE;
 DROP TABLE IF EXISTS "challangelikes" CASCADE;
 DROP TABLE IF EXISTS "resourcelikes" CASCADE;
+DROP TABLE IF EXISTS "resourcetag" CASCADE;
+DROP TABLE IF EXISTS "commentlikes" CASCADE;
 
 CREATE TABLE "public"."challangelikes" (
     "challenge_id" integer NOT NULL,
@@ -72,6 +74,12 @@ CREATE TABLE "public"."resourcelikes" (
     "resource_id" integer NOT NULL,
     "user_id" integer NOT NULL,
     CONSTRAINT "resourcelikes_pkey" PRIMARY KEY ("resource_id", "user_id")
+) WITH (oids = false);
+
+CREATE TABLE "public"."commentlikes" (
+    "comment_id" integer NOT NULL,
+    "user_id" integer NOT NULL,
+    CONSTRAINT "commentlikes_pkey" PRIMARY KEY ("comment_id", "user_id")
 ) WITH (oids = false);
 
 CREATE TABLE "public"."comments" (

@@ -147,19 +147,34 @@ class Comment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
-class ChallengeComment(Base):
-    __tablename__ = "challangecomment"
+# class ChallengeComment(Base):
+#     __tablename__ = "challangecomment"
 
-    challenge_id = Column(Integer, ForeignKey(
-        "challenges.id"), primary_key=True)
-    comment_id = Column(Integer, ForeignKey("comments.id"), primary_key=True)
+#     challenge_id = Column(Integer, ForeignKey(
+#         "challenges.id"), primary_key=True)
+#     comment_id = Column(Integer, ForeignKey("comments.id"), primary_key=True)
 
+
+# class ResourceComment(Base):
+#     __tablename__ = "resourcecomment"
+
+#     resource_id = Column(Integer, ForeignKey("resources.id"), primary_key=True)
+#     comment_id = Column(Integer, ForeignKey("comments.id"), primary_key=True)
 
 class ResourceComment(Base):
     __tablename__ = "resourcecomment"
+    resource_id = Column(Integer, ForeignKey(
+        "resources.id", ondelete="CASCADE"), primary_key=True)
+    comment_id = Column(Integer, ForeignKey(
+        "comments.id", ondelete="CASCADE"), primary_key=True)
 
-    resource_id = Column(Integer, ForeignKey("resources.id"), primary_key=True)
-    comment_id = Column(Integer, ForeignKey("comments.id"), primary_key=True)
+
+class ChallengeComment(Base):
+    __tablename__ = "challengecomment"
+    challenge_id = Column(Integer, ForeignKey(
+        "challenges.id", ondelete="CASCADE"), primary_key=True)
+    comment_id = Column(Integer, ForeignKey(
+        "comments.id", ondelete="CASCADE"), primary_key=True)
 
 
 class Purchase(Base):
@@ -180,6 +195,12 @@ class ChallengeLike(Base):
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     challenge_id = Column(Integer, ForeignKey(
         "challenges.id"), primary_key=True)
+
+
+class CommentLike(Base):
+    __tablename__ = "commentlikes"
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    comment_id = Column(Integer, ForeignKey("comments.id"), primary_key=True)
 
 
 Base.metadata.create_all(bind=engine)

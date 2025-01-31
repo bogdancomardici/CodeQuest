@@ -105,6 +105,15 @@ function Inbox() {
       toast.error("Failed to update reward points.");
     }
   };
+
+  const formatTime = (timeInHours) => {
+    const totalSeconds = Math.floor(timeInHours * 3600);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+  };
+
   const sortedNotifications = [...notifications].sort((a, b) => a.id - b.id);
 
   return (
@@ -122,13 +131,7 @@ function Inbox() {
                   <li className="notification-item">
                     <span className="notification-message">
                       {rewardTimer !== null && rewardTimer > 0
-                        ? rewardTimer >= 1
-                          ? `Next reward available in ${rewardTimer.toFixed(
-                              2
-                            )} hours`
-                          : `Next reward available in ${(
-                              rewardTimer * 60
-                            ).toFixed(0)} minutes`
+                        ? `Next reward available in ${formatTime(rewardTimer)}`
                         : "Daily Reward Available! Click to spin the wheel."}
                     </span>
                     {rewardTimer !== null && rewardTimer <= 0 && (

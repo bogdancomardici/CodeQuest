@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta, timezone
-from schemas import NotificationCreate, NotificationRead, PointsUpdate, PurchaseCreate, PurchaseRead
+from schemas import CommentLikeCreate, CommentLikeDelete, CommentLikeRead, NotificationCreate, NotificationRead, PointsUpdate, PurchaseCreate, PurchaseRead
 import logging
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, Body
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from models import (
     Base,
+    CommentLike,
     Notification,
     Purchase,
     ResourceTag,
@@ -763,6 +764,47 @@ def update_comment(
     db.refresh(db_comment)
     return db_comment
 
+# comment likes endpoints
+
+
+@app.post("/comments/like", response_model=CommentLikeRead)
+def add_comment_like(comment_like: CommentLikeCreate, db: Session = Depends(get_db)):
+    existing_like = db.query(CommentLike).filter(
+        CommentLike.comment_id == comment_like.comment_id,
+        CommentLike.user_id == comment_like.user_id
+    ).first()
+    if existing_like:
+        db.delete(existing_like)
+        db.commit()
+        return existing_like
+
+    new_like = CommentLike(**comment_like.dict())
+    db.add(new_like)
+    db.commit()
+    db.refresh(new_like)
+    return new_like
+
+
+@app.delete("/comments/like", response_model=CommentLikeDelete)
+def delete_comment_like(comment_like: CommentLikeDelete, db: Session = Depends(get_db)):
+    existing_like = db.query(CommentLike).filter(
+        CommentLike.comment_id == comment_like.comment_id,
+        CommentLike.user_id == comment_like.user_id
+    ).first()
+    if not existing_like:
+        raise HTTPException(status_code=404, detail="Like not found")
+
+    db.delete(existing_like)
+    db.commit()
+    return comment_like
+
+
+@app.get("/comments/{comment_id}/likes", response_model=List[CommentLikeRead])
+def get_comment_likes(comment_id: int, db: Session = Depends(get_db)):
+    likes = db.query(CommentLike).filter(
+        CommentLike.comment_id == comment_id).all()
+    return likes
+
 
 @app.get("/challenges/{challenge_id}/comments", response_model=List[CommentRead])
 def get_challenge_comments(challenge_id: int, db: Session = Depends(get_db)):
@@ -807,14 +849,12 @@ def get_resource_comments(resource_id: int, db: Session = Depends(get_db)):
 
 @app.post("/resources/{resource_id}/comments", response_model=ResourceCommentRead)
 def add_resource_comment(
-    resource_id: int, user_id: int, comment: str, db: Session = Depends(get_db)
+    resource_comment: ResourceCommentCreate = Body(...),
+    db: Session = Depends(get_db)
 ):
-    db_comment = Comment(user_id=user_id, comment=comment)
-    db.add(db_comment)
-    db.commit()
-    db.refresh(db_comment)
+    # Associate the comment with the resource
     resource_comment = ResourceComment(
-        resource_id=resource_id, comment_id=db_comment.id
+        resource_id=resource_comment.resource_id, comment_id=resource_comment.comment_id
     )
     db.add(resource_comment)
     db.commit()
@@ -832,6 +872,8 @@ def delete_comment(comment_id: int, db: Session = Depends(get_db)):
     comment = db.query(Comment).filter(Comment.id == comment_id).first()
     if comment is None:
         raise HTTPException(status_code=404, detail="Comment not found")
+
+    db.query(CommentLike).filter(CommentLike.comment_id == comment_id).delete()
     db.delete(comment)
     db.commit()
     return comment
@@ -908,7 +950,7 @@ def update_reward_points(user_id: int, points_update: PointsUpdate, db: Session 
 
     user.reward_points += points_update.points
     # Reset the reward timer to 24 hours from now
-    user.reward_timer = datetime.now(timezone.utc) + timedelta(minutes=1)
+    user.reward_timer = datetime.now(timezone.utc) + timedelta(hours=24)
     db.commit()
     return {"message": "Reward points updated successfully", "points": points_update.points}
 

@@ -358,5 +358,26 @@ class ChallengeLikeDelete(BaseModel):
         from_attributes = True
 
 
+class CommentLikeCreate(BaseModel):
+    user_id: int
+    comment_id: int
+
+
+class CommentLikeRead(BaseModel):
+    user_id: int
+    comment_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class CommentLikeDelete(BaseModel):
+    user_id: int
+    comment_id: int
+
+    class Config:
+        from_attributes = True
+
+
 class PointsUpdate(BaseModel):
     points: int
