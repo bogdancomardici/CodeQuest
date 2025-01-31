@@ -106,6 +106,7 @@ function Inbox({ updateNotifications }) {
       toast.error("Failed to update reward points.");
     }
   };
+  const sortedNotifications = [...notifications].sort((a, b) => a.id - b.id);
 
   return (
     <div className="inbox-container">
@@ -119,7 +120,28 @@ function Inbox({ updateNotifications }) {
               </div>
               <div className="inner-card-inbox">
                 <ul className="notifications-list">
-                  {notifications.map((notification) => (
+                  <li className="notification-item">
+                    <span className="notification-message">
+                      {rewardTimer !== null && rewardTimer > 0
+                        ? rewardTimer >= 1
+                          ? `Next reward available in ${rewardTimer.toFixed(
+                              2
+                            )} hours`
+                          : `Next reward available in ${(
+                              rewardTimer * 60
+                            ).toFixed(0)} minutes`
+                        : "Daily Reward Available! Click to spin the wheel."}
+                    </span>
+                    {rewardTimer !== null && rewardTimer <= 0 && (
+                      <button
+                        className="button-inbox reward-button"
+                        onClick={handleDailyRewardClick}
+                      >
+                        Claim Reward
+                      </button>
+                    )}
+                  </li>
+                  {sortedNotifications.map((notification) => (
                     <li key={notification.id} className="notification-item">
                       <span className="notification-message">
                         {notification.message}
@@ -145,27 +167,6 @@ function Inbox({ updateNotifications }) {
                       </div>
                     </li>
                   ))}
-                  <li className="notification-item">
-                    <span className="notification-message">
-                      {rewardTimer !== null && rewardTimer > 0
-                        ? rewardTimer >= 1
-                          ? `Next reward available in ${rewardTimer.toFixed(
-                              2
-                            )} hours`
-                          : `Next reward available in ${(
-                              rewardTimer * 60
-                            ).toFixed(0)} minutes`
-                        : "Daily Reward Available! Click to spin the wheel."}
-                    </span>
-                    {rewardTimer !== null && rewardTimer <= 0 && (
-                      <button
-                        className="button-inbox reward-button"
-                        onClick={handleDailyRewardClick}
-                      >
-                        Claim Reward
-                      </button>
-                    )}
-                  </li>
                 </ul>
               </div>
             </div>
