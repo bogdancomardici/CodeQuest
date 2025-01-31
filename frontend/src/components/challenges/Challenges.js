@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -50,6 +50,27 @@ function Challenges() {
 
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const [likes, setLikes] = useState({});
+
+  const fetchLikes = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:8000/challenges/likes"
+      );
+      const likesMap = response.data.reduce((acc, item) => {
+        acc[item.challenge_id] = item.likes;
+        return acc;
+      }, {});
+      setLikes(likesMap);
+    } catch (error) {
+      console.error("Error fetching likes:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLikes();
+  }, [fetchLikes]);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -105,12 +126,14 @@ function Challenges() {
 
     if (filter.sortBy === "latest") {
       filtered.sort((a, b) => b.id - a.id);
-    } else {
+    } else if (filter.sortBy === "oldest") {
       filtered.sort((a, b) => a.id - b.id);
+    } else if (filter.sortBy === "mostLiked") {
+      filtered.sort((a, b) => (likes[b.id] || 0) - (likes[a.id] || 0)); // Add this line
     }
 
     return filtered;
-  }, [allChallenges, searchTerm, filter]);
+  }, [allChallenges, searchTerm, filter, likes]);
 
   const startIndex = page * challengesPerPage;
   const endIndex = startIndex + challengesPerPage;
@@ -248,6 +271,7 @@ function Challenges() {
                 >
                   <option value="latest">Latest</option>
                   <option value="oldest">Oldest</option>
+                  <option value="mostLiked">Most Liked</option>
                 </select>
 
                 <select

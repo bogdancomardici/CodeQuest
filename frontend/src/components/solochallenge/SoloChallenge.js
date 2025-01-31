@@ -28,6 +28,50 @@ function SoloChallenge() {
   const [users, setUsers] = useState({});
   const [commentFilter, setCommentFilter] = useState("latest");
 
+  const [challengeLikes, setChallengeLikes] = useState(0);
+  const [userChallengeLike, setUserChallengeLike] = useState(false);
+
+  const fetchChallengeLikes = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/challenges/like/${id}`
+      );
+      setChallengeLikes(response.data.length);
+      setUserChallengeLike(
+        response.data.some((like) => like.user_id === user.id)
+      );
+    } catch (error) {
+      console.error("Error fetching challenge likes:", error);
+    }
+  }, [id, user.id]);
+
+  const handleLikeChallenge = async () => {
+    try {
+      const response = await axios.post(
+        `http://localhost:8000/challenges/like`,
+        {
+          user_id: user.id,
+          challenge_id: id,
+        }
+      );
+      setChallengeLikes((prevLikes) =>
+        userChallengeLike ? prevLikes - 1 : prevLikes + 1
+      );
+      setUserChallengeLike((prevUserLike) => !prevUserLike);
+      if (userChallengeLike) {
+        toast.success("Challenge unliked!");
+      } else {
+        toast.success("Challenge liked!");
+      }
+    } catch (error) {
+      console.error("Error liking/unliking challenge:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchChallengeLikes();
+  }, [fetchChallengeLikes]);
+
   const filteredSortedComments = useMemo(() => {
     const sortedComments = [...comments];
     if (commentFilter === "latest") {
@@ -377,6 +421,9 @@ function SoloChallenge() {
               ))}
             </ul>
           </div>
+          <button className="like-button" onClick={handleLikeChallenge}>
+            Like ({challengeLikes})
+          </button>
         </div>
         <div className="grid-item-solo right-solo">
           <div className="timer-container">

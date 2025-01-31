@@ -4,6 +4,7 @@ import logging
 from fastapi import FastAPI, HTTPException, Depends, Query, Body
 from typing import List, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from models import (
     Base,
     CommentLike,
@@ -355,6 +356,52 @@ def filter_challenges(
     return query.all()
 
 
+@app.get("/challenges/like/{challenge_id}", response_model=List[ChallengeLikeRead])
+def get_challenge_like(challenge_id: int, db: Session = Depends(get_db)):
+    likes = db.query(ChallengeLike).filter(
+        ChallengeLike.challenge_id == challenge_id).all()
+    return likes
+
+
+@app.post("/challenges/like", response_model=ChallengeLikeRead)
+def add_or_remove_challenge_like(challenge_like: ChallengeLikeCreate, db: Session = Depends(get_db)):
+    existing_like = db.query(ChallengeLike).filter(
+        ChallengeLike.challenge_id == challenge_like.challenge_id,
+        ChallengeLike.user_id == challenge_like.user_id
+    ).first()
+    if existing_like:
+        db.delete(existing_like)
+        db.commit()
+        return existing_like
+
+    new_like = ChallengeLike(**challenge_like.dict())
+    db.add(new_like)
+    db.commit()
+    db.refresh(new_like)
+    return new_like
+
+
+@app.delete("/challenges/like/", response_model=ChallengeLikeRead)
+def delete_challenge_like(challenge_id: int, user_id: int, db: Session = Depends(get_db)):
+    like = db.query(ChallengeLike).filter(ChallengeLike.challenge_id ==
+                                          challenge_id, ChallengeLike.user_id == user_id).first()
+    if like is None:
+        raise HTTPException(status_code=404, detail="Like not found")
+    db.delete(like)
+    db.commit()
+    return like
+
+
+@app.get("/challenges/likes", response_model=List[dict])
+def get_challenges_likes(db: Session = Depends(get_db)):
+    challenges_likes = db.query(
+        Challenge.id,
+        func.count(ChallengeLike.challenge_id).label("likes")
+    ).outerjoin(ChallengeLike, Challenge.id == ChallengeLike.challenge_id).group_by(Challenge.id).all()
+
+    return [{"challenge_id": challenge.id, "likes": challenge.likes} for challenge in challenges_likes]
+
+
 @app.get("/challenges/{challenge_id}", response_model=ChallengeRead)
 def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
     db_challenge = db.query(Challenge).filter(
@@ -407,6 +454,16 @@ def create_resource(resource: ResourceCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_resource)
     return db_resource
+
+
+@app.get("/resources/likes", response_model=List[dict])
+def get_resources_likes(db: Session = Depends(get_db)):
+    resources_likes = db.query(
+        Resource.id,
+        func.count(ResourceLike.resource_id).label("likes")
+    ).outerjoin(ResourceLike, Resource.id == ResourceLike.resource_id).group_by(Resource.id).all()
+
+    return [{"resource_id": resource.id, "likes": resource.likes} for resource in resources_likes]
 
 
 @app.get("/resources/filter", response_model=List[ResourceRead])

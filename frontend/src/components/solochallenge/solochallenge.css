@@ -161,10 +161,6 @@
   background-color: #0056b3;
 }
 
-.timer-button.start {
-  background-color: #007bff;
-}
-
 .timer-button.pause {
   background-color: #ff6347;
 }
@@ -242,7 +238,7 @@
 .edit-button:hover,
 .like-button:hover,
 .add-button:hover,
-.timer-button.start {
+.timer-button.start:hover {
   background-color: #0056b3;
 }
 
@@ -262,4 +258,8 @@
 
 .timer-button.pause:hover {
   background-color: #76a520;
+}
+
+.like-button {
+  margin-top: -75px;
 }

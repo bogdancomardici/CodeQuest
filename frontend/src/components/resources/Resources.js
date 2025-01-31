@@ -35,6 +35,24 @@ function Resources() {
   const [isLastPage, setIsLastPage] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [likes, setLikes] = useState({});
+
+  const fetchLikes = useCallback(async () => {
+    try {
+      const response = await axios.get("http://localhost:8000/resources/likes");
+      const likesMap = response.data.reduce((acc, item) => {
+        acc[item.resource_id] = item.likes;
+        return acc;
+      }, {});
+      setLikes(likesMap);
+    } catch (error) {
+      console.error("Error fetching likes:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLikes();
+  }, [fetchLikes]);
 
   useEffect(() => {
     const fetchAllResources = async () => {
@@ -58,14 +76,25 @@ function Resources() {
         lowerTitle.includes(lowerSearch) || lowerDesc.includes(lowerSearch)
       );
     });
-    return filtered.sort((a, b) => {
+
+    console.log("Filtered Resources:", filtered);
+
+    const sorted = filtered.sort((a, b) => {
       if (filter.sortBy === "latest") {
         return b.id - a.id;
-      } else {
+      } else if (filter.sortBy === "oldest") {
         return a.id - b.id;
+      } else if (filter.sortBy === "mostLiked") {
+        return (likes[b.id] || 0) - (likes[a.id] || 0);
+      } else {
+        return 0; // Default case to handle unexpected values
       }
     });
-  }, [allResources, searchTerm, filter]);
+
+    console.log("Sorted Resources:", sorted);
+
+    return sorted;
+  }, [allResources, searchTerm, filter, likes]);
 
   const startIndex = page * resourcesPerPage;
   const endIndex = startIndex + resourcesPerPage;
@@ -231,6 +260,7 @@ function Resources() {
                 >
                   <option value="latest">Latest</option>
                   <option value="oldest">Oldest</option>
+                  <option value="mostLiked">Most Liked</option>
                 </select>
               </div>
             </div>
