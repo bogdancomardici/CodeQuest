@@ -94,10 +94,15 @@ function UsersPage() {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (query) => {
+    if (!query) {
+      setSearchResults([]);
+      return;
+    }
+
     try {
       const response = await axios.get(`http://localhost:8000/users/search`, {
-        params: { query: searchTerm },
+        params: { query },
       });
       setSearchResults(response.data);
     } catch (err) {
@@ -142,12 +147,6 @@ function UsersPage() {
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
   const handleRoleChange = async (userId, newRole) => {
     try {
       await axios.put(`http://localhost:8000/users/${userId}`, {
@@ -167,6 +166,14 @@ function UsersPage() {
       u.username.toLowerCase().includes(adminSearchTerm.toLowerCase()) &&
       u.id !== user.id
   );
+
+  useEffect(() => {
+    const debounceSearch = setTimeout(() => {
+      handleSearch(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(debounceSearch);
+  }, [searchTerm]);
 
   if (loading) {
     return <div className="loading-container"></div>;
@@ -237,16 +244,17 @@ function UsersPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={handleKeyDown}
               placeholder="Search by username"
             />
           </div>
           <div className="search-results">
             <ul>
+              {searchResults.length === 0 && searchTerm && (
+                <li>No user found with searched name</li>
+              )}
               {searchResults.map((result) => (
                 <li key={result.id}>
-                  {" "}
-                  {result.username}{" "}
+                  {result.username}
                   <button
                     onClick={() => handleAddFriend(result.username)}
                     className="button-add-friend"
