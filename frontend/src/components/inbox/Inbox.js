@@ -8,7 +8,7 @@ import Button from "react-bootstrap/Button";
 import Wheel from "../wheel/Wheel";
 import "./inbox.css";
 
-function Inbox({ updateNotifications }) {
+function Inbox() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [showRewardModal, setShowRewardModal] = useState(false);
@@ -78,7 +78,6 @@ function Inbox({ updateNotifications }) {
         (n) => n.id !== notificationId
       );
       setNotifications(updatedNotifications);
-      updateNotifications(updatedNotifications); // Update notifications in NavBar
       toast.success("Notification deleted successfully!");
     } catch (error) {
       console.error("Error deleting notification:", error);
