@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./solochallenge.css";
 import axios from "axios";
@@ -26,6 +26,23 @@ function SoloChallenge() {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState("");
   const [users, setUsers] = useState({});
+  const [commentFilter, setCommentFilter] = useState("latest");
+
+  const filteredSortedComments = useMemo(() => {
+    const sortedComments = [...comments];
+    if (commentFilter === "latest") {
+      sortedComments.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+    } else if (commentFilter === "oldest") {
+      sortedComments.sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+      );
+    } else if (commentFilter === "mostLiked") {
+      sortedComments.sort((a, b) => (likes[b.id] || 0) - (likes[a.id] || 0));
+    }
+    return sortedComments;
+  }, [comments, commentFilter, likes]);
 
   useEffect(() => {
     const fetchChallenge = async () => {
@@ -221,8 +238,12 @@ function SoloChallenge() {
       fetchLikes();
     }
   }, [comments, fetchLikes]);
-
   const handleAddComment = async () => {
+    if (newComment.trim() === "") {
+      toast.error("Comment cannot be empty.");
+      return;
+    }
+
     try {
       const createdCommentResponse = await axios.post(
         `http://localhost:8000/comments/`,
@@ -240,6 +261,13 @@ function SoloChallenge() {
 
       setComments([...comments, createdComment]);
       setNewComment("");
+
+      // Update the users state to include the current user's data
+      setUsers((prevUsers) => ({
+        ...prevUsers,
+        [user.id]: user,
+      }));
+
       toast.success("Comment added successfully!");
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -247,18 +275,12 @@ function SoloChallenge() {
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    try {
-      await axios.delete(`http://localhost:8000/comments/${commentId}`);
-      setComments(comments.filter((comment) => comment.id !== commentId));
-      toast.success("Comment deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting comment:", error);
-      toast.error("Failed to delete comment.");
-    }
-  };
-
   const handleEditComment = async (commentId) => {
+    if (editingCommentText.trim() === "") {
+      toast.error("Comment cannot be empty.");
+      return;
+    }
+
     try {
       const response = await axios.put(
         `http://localhost:8000/comments/${commentId}`,
@@ -279,6 +301,22 @@ function SoloChallenge() {
     } catch (error) {
       console.error("Error editing comment:", error);
       toast.error("Failed to edit comment.");
+    }
+  };
+
+  const handleEditButtonClick = (commentId, commentText) => {
+    setEditingCommentId(commentId);
+    setEditingCommentText(commentText);
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await axios.delete(`http://localhost:8000/comments/${commentId}`);
+      setComments(comments.filter((comment) => comment.id !== commentId));
+      toast.success("Comment deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      toast.error("Failed to delete comment.");
     }
   };
 
@@ -315,7 +353,6 @@ function SoloChallenge() {
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
-
   return (
     <div className="solo-challenge-container">
       <div className="grid-layout-solo">
@@ -366,77 +403,102 @@ function SoloChallenge() {
             }}
           />
         </div>
-        <div className="comments-section">
+      </div>
+      <div className="challenge-comments-section">
+        <div className="challenge-comments-header">
           <h3>Comments</h3>
-          {comments.map((comment) => (
-            <div key={comment.id} className="comment-card">
-              <p>
-                <strong>{users[comment.user_id]?.username}</strong> -{" "}
-                {new Date(comment.created_at).toLocaleString()}
-              </p>
-              <p>{comment.comment}</p>
-              <div className="comment-actions">
-                <button onClick={() => handleLikeComment(comment.id)}>
-                  Like ({getCommentLikes(comment.id)})
-                </button>
-                {user.id === comment.user_id && (
-                  <>
-                    <button onClick={() => setEditingCommentId(comment.id)}>
-                      Edit
-                    </button>
-                    <button onClick={() => handleDeleteComment(comment.id)}>
-                      Delete
-                    </button>
-                  </>
-                )}
-                {user.role === "admin" && user.id !== comment.user_id && (
+          <div className="filter-container">
+            <h5>Sort by: </h5>
+            <select
+              name="commentSortBy"
+              className="filter-dropdown"
+              value={commentFilter}
+              onChange={(e) => setCommentFilter(e.target.value)}
+            >
+              <option value="latest">Latest</option>
+              <option value="oldest">Oldest</option>
+              <option value="mostLiked">Most Liked</option>
+            </select>
+          </div>
+        </div>
+        {filteredSortedComments.map((comment) => (
+          <div key={comment.id} className="comment-card">
+            <p>
+              <strong>{users[comment.user_id]?.username}</strong> -{" "}
+              {new Date(comment.created_at).toLocaleString()}
+            </p>
+            <p>{comment.comment}</p>
+            <div className="comment-actions">
+              <button
+                className="like-button"
+                onClick={() => handleLikeComment(comment.id)}
+              >
+                Like ({getCommentLikes(comment.id)})
+              </button>
+              {user.id === comment.user_id && (
+                <>
+                  <button
+                    className="edit-button"
+                    onClick={() =>
+                      handleEditButtonClick(comment.id, comment.comment)
+                    }
+                  >
+                    Edit
+                  </button>
                   <button
                     className="delete-button"
                     onClick={() => handleDeleteComment(comment.id)}
                   >
                     Delete
                   </button>
-                )}
-              </div>
-              {editingCommentId === comment.id && (
-                <div className="edit-comment">
-                  <textarea
-                    value={editingCommentText}
-                    onChange={(e) => setEditingCommentText(e.target.value)}
-                  />
-                  <div className="edit-comment-buttons">
-                    <button
-                      className="save-button"
-                      onClick={() => handleEditComment(comment.id)}
-                    >
-                      Save
-                    </button>
-                    <button
-                      className="cancel-button"
-                      onClick={() => setEditingCommentId(null)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
+                </>
+              )}
+              {user.role === "admin" && user.id !== comment.user_id && (
+                <button
+                  className="delete-button"
+                  onClick={() => handleDeleteComment(comment.id)}
+                >
+                  Delete
+                </button>
               )}
             </div>
-          ))}
-          <div className="add-comment">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-            />
-            <button className="add-button" onClick={handleAddComment}>
-              Add Comment
-            </button>
+            {editingCommentId === comment.id && (
+              <div className="edit-comment">
+                <textarea
+                  value={editingCommentText}
+                  onChange={(e) => setEditingCommentText(e.target.value)}
+                />
+                <div className="edit-comment-buttons">
+                  <button
+                    className="save-button"
+                    onClick={() => handleEditComment(comment.id)}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="cancel-button"
+                    onClick={() => setEditingCommentId(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+        ))}
+        <div className="add-comment">
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment..."
+          />
+          <button className="add-button" onClick={handleAddComment}>
+            Add Comment
+          </button>
         </div>
       </div>
       <ToastContainer />
     </div>
   );
 }
-
 export default SoloChallenge;

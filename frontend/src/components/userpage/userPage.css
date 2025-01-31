@@ -162,10 +162,6 @@
   background-color: #dc3545;
 }
 
-.search-section button {
-  background-color: #007bff;
-}
-
 .search-results ul {
   list-style: none;
   padding: 0;
@@ -195,7 +191,6 @@
   background: rgba(45, 45, 45, 0.5); /* Slight shine effect */
 }
 .search-results button,
-.button-edit,
 .button-save {
   padding: 5px 10px;
   /* font-size: 0.9rem; */
@@ -247,13 +242,11 @@
 }
 
 .promote-button,
-.button-edit,
 .button-save {
   background-color: #28a745;
 }
 
 .promote-button:hover,
-.button-edit:hover,
 .button-save:hover {
   background-color: #218838;
 }
@@ -266,6 +259,14 @@
 .demote-button:hover,
 .button-cancel:hover {
   background-color: #c82333;
+}
+
+.button-edit {
+  background-color: #007bff;
+}
+
+.button-edit:hover {
+  background-color: #0056b3;
 }
 
 @media (max-width: 1400px) {
