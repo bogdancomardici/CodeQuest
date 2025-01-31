@@ -138,7 +138,7 @@
 
 .list-item-resources {
   display: flex;
-  justify-content: center; /* Center content horizontally */
+  justify-content: space-between; /* Adjust to space between */
   align-items: center;
   padding: 10px;
   background: rgba(45, 45, 45, 0.5); /* Darker gray with transparency */
@@ -149,7 +149,13 @@
   border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
   margin-bottom: 10px;
   min-height: 60px;
-  position: relative; /* Add relative positioning */
+}
+
+.resource-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
 .resource-title {
@@ -158,13 +164,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  position: absolute; /* Center the title absolutely */
-  left: 50%;
-  transform: translateX(-50%);
+  margin: auto;
+  margin-left: 37%;
+}
+
+.button-container-resources {
+  display: flex;
+  gap: 10px;
 }
 
 .button-resources {
-  top: 7.5px;
   padding: 10px 15px;
   border: none;
   border-radius: 5px;
@@ -177,8 +186,6 @@
   -webkit-backdrop-filter: blur(8px); /* For Safari */
   border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
   transition: box-shadow 0.3s ease, border 0.3s ease;
-  position: absolute; /* Position buttons absolutely */
-  right: 10px;
 }
 
 .list-item-resources:hover {
@@ -247,7 +254,6 @@
 
 .buy-button {
   width: 120px; /* Fixed size */
-  margin-right: 83px; /* Margin to separate from delete button */
 }
 
 .button-resources:hover {

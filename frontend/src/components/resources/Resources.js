@@ -243,31 +243,35 @@ function Resources() {
                     className="list-item-resources"
                     onClick={() => handleItemClick(resource.id)}
                   >
-                    <span className="resource-title">{resource.title}</span>
-                    {resource.reward_points > 0 &&
-                      !purchasedResources.includes(resource.id) && (
-                        <button
-                          className="button-resources buy-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleBuyButtonClick(resource);
-                          }}
-                        >
-                          Buy for {resource.reward_points}
-                        </button>
-                      )}
-                    {user && user.role === "admin" && (
-                      <button
-                        className="button-resources delete-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedResource(resource);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    )}
+                    <div className="resource-content">
+                      <span className="resource-title">{resource.title}</span>
+                      <div className="button-container-resources">
+                        {resource.reward_points > 0 &&
+                          !purchasedResources.includes(resource.id) && (
+                            <button
+                              className="button-resources buy-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBuyButtonClick(resource);
+                              }}
+                            >
+                              Buy for {resource.reward_points}
+                            </button>
+                          )}
+                        {user && user.role === "admin" && (
+                          <button
+                            className="button-resources delete-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedResource(resource);
+                              setShowDeleteModal(true);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ul>

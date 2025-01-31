@@ -143,7 +143,7 @@
 
 button {
   align-self: flex-end;
-  padding: 5px 15px;
+  padding: 7px 15px;
   border: 1px solid transparent;
   border-radius: 8px;
   background-color: #007bff;
@@ -168,4 +168,35 @@ button {
 .resource-comments-header {
   display: flex;
   justify-content: space-between;
+}
+
+.edit-button,
+.like-button,
+.add-butotn,
+.timer-button.start {
+  background-color: #007bff;
+}
+
+.edit-button:hover,
+.like-button:hover,
+.add-button:hover {
+  background-color: #0056b3;
+}
+
+.delete-button,
+.cancel-button {
+  background-color: #dc3545;
+}
+
+.delete-button:hover,
+.cancel-button:hover {
+  background-color: #c82333;
+}
+
+.timer-button.pause {
+  background-color: #86bc25;
+}
+
+.timer-button.pause:hover {
+  background-color: #76a520;
 }
