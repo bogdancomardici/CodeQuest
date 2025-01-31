@@ -114,12 +114,17 @@ function Challenges() {
 
   const startIndex = page * challengesPerPage;
   const endIndex = startIndex + challengesPerPage;
-  const currentPageChallenges = filteredSortedChallenges.slice(startIndex, endIndex);
+  const currentPageChallenges = filteredSortedChallenges.slice(
+    startIndex,
+    endIndex
+  );
+  const totalPages = Math.ceil(
+    filteredSortedChallenges.length / challengesPerPage
+  );
 
   useEffect(() => {
     setIsLastPage(endIndex >= filteredSortedChallenges.length);
   }, [endIndex, filteredSortedChallenges]);
-
 
   const handleAddChallenge = async () => {
     try {
@@ -156,7 +161,6 @@ function Challenges() {
       toast.error("Failed to delete challenge.");
     }
   };
-
 
   const openFriendsModal = (challengeId) => {
     setCurrentChallengeId(challengeId);
@@ -219,7 +223,6 @@ function Challenges() {
     setPage(0);
   };
 
-
   return (
     <div className="challenges-container">
       <div className="grid-layout-challenges">
@@ -254,13 +257,13 @@ function Challenges() {
                   onChange={handleFilterChange}
                 >
                   <option value="">All Languages</option>
-                  {Array.from(new Set(allChallenges.map((c) => c.language))).map(
-                    (lang) => (
-                      <option key={lang} value={lang}>
-                        {lang}
-                      </option>
-                    )
-                  )}
+                  {Array.from(
+                    new Set(allChallenges.map((c) => c.language))
+                  ).map((lang) => (
+                    <option key={lang} value={lang}>
+                      {lang}
+                    </option>
+                  ))}
                 </select>
 
                 <select
@@ -287,7 +290,9 @@ function Challenges() {
                     <div className="button-container-challenges">
                       <button
                         className="button-challenges solo-button"
-                        onClick={() => navigate(`/soloChallenge/${challenge.id}`)}
+                        onClick={() =>
+                          navigate(`/soloChallenge/${challenge.id}`)
+                        }
                       >
                         Solo Challenge
                       </button>
@@ -326,11 +331,17 @@ function Challenges() {
                   Next
                 </button>
               </div>
+              <div className="pagination-info">
+                Page {page + 1} of {totalPages || 1}
+              </div>
             </div>
 
             {user && (user.role === "admin" || user.role === "expert") && (
               <div>
-                <button onClick={() => setShowModal(true)} className="button-add">
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="button-add"
+                >
                   Add Challenge
                 </button>
               </div>
@@ -354,7 +365,10 @@ function Challenges() {
                 placeholder="Enter title"
                 value={newChallenge.title}
                 onChange={(e) =>
-                  setNewChallenge((prev) => ({ ...prev, title: e.target.value }))
+                  setNewChallenge((prev) => ({
+                    ...prev,
+                    title: e.target.value,
+                  }))
                 }
               />
             </Form.Group>
@@ -381,7 +395,10 @@ function Challenges() {
                 placeholder="Enter input"
                 value={newChallenge.input}
                 onChange={(e) =>
-                  setNewChallenge((prev) => ({ ...prev, input: e.target.value }))
+                  setNewChallenge((prev) => ({
+                    ...prev,
+                    input: e.target.value,
+                  }))
                 }
               />
             </Form.Group>
@@ -393,7 +410,10 @@ function Challenges() {
                 placeholder="Enter output"
                 value={newChallenge.output}
                 onChange={(e) =>
-                  setNewChallenge((prev) => ({ ...prev, output: e.target.value }))
+                  setNewChallenge((prev) => ({
+                    ...prev,
+                    output: e.target.value,
+                  }))
                 }
               />
             </Form.Group>
@@ -469,7 +489,10 @@ function Challenges() {
           </List>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowFriendsModal(false)}>
+          <Button
+            variant="secondary"
+            onClick={() => setShowFriendsModal(false)}
+          >
             Close
           </Button>
           <Button variant="primary" onClick={handleChallengeFriend}>

@@ -73,6 +73,13 @@ function Resources() {
     startIndex,
     endIndex
   );
+  const totalPages = Math.ceil(
+    filteredSortedResources.length / resourcesPerPage
+  );
+
+  useEffect(() => {
+    setIsLastPage(endIndex >= filteredSortedResources.length);
+  }, [endIndex, filteredSortedResources]);
 
   const fetchPurchasedResources = useCallback(async () => {
     try {
@@ -86,10 +93,6 @@ function Resources() {
       console.error("Error fetching purchased resources:", error);
     }
   }, [user.id]);
-
-  useEffect(() => {
-    setIsLastPage(endIndex >= filteredSortedResources.length);
-  }, [endIndex, filteredSortedResources]);
 
   useEffect(() => {
     fetchPurchasedResources();
@@ -254,6 +257,10 @@ function Resources() {
                 >
                   Next
                 </button>
+              </div>
+
+              <div className="pagination-info">
+                Page {page + 1} of {totalPages || 1}
               </div>
             </div>
 

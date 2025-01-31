@@ -43,10 +43,6 @@ function Leaderboard() {
     }
   };
 
-  const handleItemClick = (username) => {
-    alert(`Viewing profile of ${username}`);
-  };
-
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setPage(0);
@@ -72,27 +68,21 @@ function Leaderboard() {
             <div className="list-container-leaderboard">
               <ul className="list-leaderboard">
                 {currentPageUsers.map((user, index) => (
-                  <li
-                    key={user.id}
-                    className="list-item-leaderboard"
-                    onClick={() => handleItemClick(user.username)}
-                  >
+                  <li key={user.id} className="list-item-leaderboard">
                     <span className="username">{user.username}</span>
                     <span className="points">Points: {user.score}</span>
-                    <span className="position">
-                      {startIndex + index + 1}
-                    </span>
+                    <span className="position">{startIndex + index + 1}</span>
                   </li>
                 ))}
                 {currentPageUsers.length < usersPerPage &&
-                  Array.from({ length: usersPerPage - currentPageUsers.length })
-                    .map((_, idx) => (
-                      <li
-                        key={`placeholder-${idx}`}
-                        className="list-item-placeholder"
-                      />
-                    ))
-                }
+                  Array.from({
+                    length: usersPerPage - currentPageUsers.length,
+                  }).map((_, idx) => (
+                    <li
+                      key={`placeholder-${idx}`}
+                      className="list-item-placeholder"
+                    />
+                  ))}
               </ul>
               <div className="pagination-controls">
                 <button
