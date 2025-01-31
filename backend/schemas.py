@@ -22,13 +22,15 @@ class UserRead(BaseModel):
     class Config:
         from_attributes = True
 
+
 class UserChallengeRead(BaseModel):
     user_id: int
     challenge_id: int
     solution: str
-    
+
     class Config:
         from_attributes = True
+
 
 class UserChallengeCreate(BaseModel):
     user_id: int
@@ -38,12 +40,14 @@ class UserChallengeCreate(BaseModel):
     class Config:
         from_attributes = True
 
+
 class UserChallengeDelete(BaseModel):
     user_id: int
     challenge_id: int
 
     class Config:
         from_attributes = True
+
 
 class UserSearch(BaseModel):
     query: str
@@ -352,3 +356,7 @@ class ChallengeLikeDelete(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PointsUpdate(BaseModel):
+    points: int

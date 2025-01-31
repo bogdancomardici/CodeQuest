@@ -9,14 +9,14 @@ function Wheel({ segments, segColors, onFinished }) {
         segColors={segColors}
         winningSegment=""
         onFinished={onFinished}
-        primaryColor="black"
-        primaryColoraround="#ffffffb4"
-        contrastColor="white"
+        primaryColor="#0d1b2a"
+        primaryColoraround="#1b3b4f"
+        contrastColor="#ffffff"
         buttonText="Spin"
         isOnlyOnce={false}
         size={190}
-        upDuration={50}
-        downDuration={2000}
+        upDuration={100}
+        downDuration={500}
       />
     </div>
   );

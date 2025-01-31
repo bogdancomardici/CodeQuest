@@ -28,8 +28,8 @@ const WheelComponent = ({
   const spinStart = useRef(0);
   const frames = useRef(0);
   const canvasRef = useRef(null);
-  const centerX = 300;
-  const centerY = 300;
+  const centerX = 240;
+  const centerY = 240;
 
   const upTime = segments.length * upDuration;
   const downTime = segments.length * downDuration;
@@ -72,8 +72,21 @@ const WheelComponent = ({
 
   useEffect(() => {
     const canvas = canvasRef.current;
+
+    const handleMouseMove = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+      if (isMouseNearCenter(mouseX, mouseY)) {
+        canvas.style.cursor = "pointer";
+      } else {
+        canvas.style.cursor = "default";
+      }
+    };
+
     if (canvas) {
       canvas.addEventListener("click", spin);
+      canvas.addEventListener("mousemove", handleMouseMove);
     }
 
     wheelInit();
@@ -84,9 +97,10 @@ const WheelComponent = ({
     return () => {
       if (canvas) {
         canvas.removeEventListener("click", spin);
+        canvas.removeEventListener("mousemove", handleMouseMove);
       }
     };
-  }, [spin, wheelInit]);
+  }, [spin, wheelInit, centerX, centerY]);
 
   const onTimerTick = () => {
     frames.current++;
@@ -239,6 +253,13 @@ const WheelComponent = ({
     ctx.clearRect(0, 0, 1000, 800);
   };
 
+  const isMouseNearCenter = (x, y) => {
+    const dx = x - centerX;
+    const dy = y - centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < 40; // Adjust the radius as needed
+  };
+
   return (
     <div
       id="wheel"
@@ -251,8 +272,8 @@ const WheelComponent = ({
       <canvas
         id="canvas"
         ref={canvasRef}
-        width="600"
-        height="600"
+        width="480"
+        height="480"
         style={{
           pointerEvents: isFinished && isOnlyOnce ? "none" : "auto",
         }}

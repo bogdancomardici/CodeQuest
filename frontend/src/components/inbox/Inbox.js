@@ -27,16 +27,16 @@ function Inbox({ updateNotifications }) {
     "10 points",
   ];
   const segColors = [
-    "#FF5733",
-    "#33FF57",
-    "#FF5733",
-    "#33FF57",
-    "#FF5733",
-    "#33FF57",
-    "#FF5733",
-    "#33FF57",
-    "#FF5733",
-    "#33FF57",
+    "#1a1a1a", // Dark gray
+    "#333333", // Medium gray
+    "#0d1b2a", // Dark blue
+    "#1b263b", // Medium blue
+    "#1a1a1a", // Dark gray
+    "#333333", // Medium gray
+    "#0d1b2a", // Dark blue
+    "#1b263b", // Medium blue
+    "#1a1a1a", // Dark gray
+    "#333333", // Medium gray
   ];
 
   const fetchNotifications = useCallback(async () => {
@@ -148,9 +148,13 @@ function Inbox({ updateNotifications }) {
                   <li className="notification-item">
                     <span className="notification-message">
                       {rewardTimer !== null && rewardTimer > 0
-                        ? `Next reward available in ${rewardTimer.toFixed(
-                            2
-                          )} hours`
+                        ? rewardTimer >= 1
+                          ? `Next reward available in ${rewardTimer.toFixed(
+                              2
+                            )} hours`
+                          : `Next reward available in ${(
+                              rewardTimer * 60
+                            ).toFixed(0)} minutes`
                         : "Daily Reward Available! Click to spin the wheel."}
                     </span>
                     {rewardTimer !== null && rewardTimer <= 0 && (
