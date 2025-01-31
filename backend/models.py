@@ -168,14 +168,18 @@ class Purchase(Base):
     resource_id = Column(Integer, ForeignKey("resources.id"), primary_key=True)
     purchase_date = Column(DateTime, default=datetime.utcnow)
 
+
 class ResourceLike(Base):
     __tablename__ = "resourcelikes"
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     resource_id = Column(Integer, ForeignKey("resources.id"), primary_key=True)
 
+
 class ChallengeLike(Base):
     __tablename__ = "challengelikes"
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    challenge_id = Column(Integer, ForeignKey("challenges.id"), primary_key=True)
+    challenge_id = Column(Integer, ForeignKey(
+        "challenges.id"), primary_key=True)
+
 
 Base.metadata.create_all(bind=engine)

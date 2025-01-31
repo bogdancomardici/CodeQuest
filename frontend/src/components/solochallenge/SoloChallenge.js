@@ -5,6 +5,8 @@ import { getChallenge, submitCode } from "../../api/challenges";
 import { useAuth } from "../authentification/AuthContext";
 import api from "../../api/apiInstance";
 import { Editor } from "@monaco-editor/react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function SoloChallenge() {
   const { id } = useParams();
@@ -15,7 +17,6 @@ function SoloChallenge() {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [code, setCode] = useState("");
-  const [output, setOutput] = useState("");
   const [recommendedResources, setRecommendedResources] = useState([]);
 
   useEffect(() => {
@@ -23,7 +24,13 @@ function SoloChallenge() {
       try {
         const challengeData = await getChallenge(id);
         setChallenge(challengeData);
-        setCode(getTextStart(challengeData.language));
+
+        const initialCode = await getTextStart(
+          challengeData.language,
+          parseInt(id, 10),
+          user.id
+        );
+        setCode(initialCode);
         setLoading(false);
       } catch (err) {
         console.error("Failed to fetch challenge:", err);
@@ -45,7 +52,7 @@ function SoloChallenge() {
 
     fetchChallenge();
     fetchRecommendedResources();
-  }, [id]);
+  }, [id, user.id]);
 
   useEffect(() => {
     let timer;
@@ -75,27 +82,25 @@ function SoloChallenge() {
       console.log("API Response:", result);
 
       if (result?.stdout) {
-        setOutput(result.stdout);
         if (result.points_awarded) {
           const timeTaken = formatTime();
-          alert(
+          toast.success(
             `Congratulations! You have solved the problem in ${timeTaken} and have been awarded ${result.points_awarded} points.`
           );
           setTime(0); // Reset the timer
           setIsRunning(false); // Stop the timer
         }
         if (result.badge_awarded) {
-          alert(
+          toast.success(
             `Congratulations! You have been awarded the badge: ${result.badge_awarded}`
           );
         }
       } else {
-        setOutput("No output or an error occurred.");
+        toast.error("No output or an error occurred.");
       }
     } catch (error) {
       console.error("Error submitting code:", error);
-      alert(error.response?.data?.detail || "Submission failed.");
-      setOutput("Error submitting code.");
+      toast.error(error.response?.data?.detail || "Submission failed.");
     }
   };
 
@@ -107,7 +112,24 @@ function SoloChallenge() {
       .padStart(2, "0")}`;
   };
 
-  const getTextStart = (language) => {
+  const getTextStart = async (language, challengeId, userId) => {
+    try {
+      const response = await api.get(`/users/challenges/`, {
+        params: { user_id: userId },
+      });
+      const userChallenges = response.data;
+
+      const userChallenge = userChallenges.find(
+        (uc) => uc.challenge_id === challengeId
+      );
+
+      if (userChallenge) {
+        return userChallenge.solution;
+      }
+    } catch (err) {
+      console.error("Failed to fetch user challenges:", err);
+    }
+
     switch (language?.toUpperCase()) {
       case "JAVA":
         return `public class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}`;
@@ -166,9 +188,6 @@ function SoloChallenge() {
           </div>
         </div>
         <div className="grid-item-solo right-solo">
-          <div className="language-display">
-            <i className="fa-solid fa-code"></i> {challenge.language}
-          </div>
           <div className="timer-container">
             <button
               onClick={toggleTimer}
@@ -183,7 +202,7 @@ function SoloChallenge() {
           </div>
 
           <Editor
-            height="400px"
+            height="550px"
             language={challenge.language.toLowerCase()}
             theme="vs-dark"
             value={code}
@@ -192,14 +211,9 @@ function SoloChallenge() {
               readOnly: !isRunning,
             }}
           />
-          {output && (
-            <div className="output-container">
-              <h3>Output:</h3>
-              <pre>{output}</pre>
-            </div>
-          )}
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }

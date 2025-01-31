@@ -526,6 +526,17 @@ def submit_code(
     if db_challenge is None:
         raise HTTPException(status_code=404, detail="Challenge not found")
 
+    # Check if the user has already solved this challenge
+    user_challenge = (
+        db.query(UserChallenge)
+        .filter(UserChallenge.user_id == submission.user_id)
+        .filter(UserChallenge.challenge_id == submission.challenge_id)
+        .first()
+    )
+    if user_challenge:
+        raise HTTPException(
+            status_code=400, detail="You have already solved this challenge")
+
     try:
         code_b64 = base64.b64encode(submission.source_code.encode("utf-8")).decode(
             "utf-8"
@@ -615,6 +626,14 @@ def submit_code(
                 badge_awarded = first_problem_badge.title
                 print(
                     f"User {user.id} awarded badge: {first_problem_badge.title}")
+
+        # Add the solved challenge to user challenges
+        user_challenge = UserChallenge(
+            user_id=user.id, challenge_id=db_challenge.id, solution=submission.source_code
+        )
+        db.add(user_challenge)
+        db.commit()
+        print(f"User {user.id} solved challenge {db_challenge.id}")
 
     return {
         "status": CodeSubmissionStatus(
