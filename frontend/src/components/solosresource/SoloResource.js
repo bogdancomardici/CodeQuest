@@ -17,6 +17,8 @@ function SoloResource() {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState("");
   const [users, setUsers] = useState({});
+  const [resourceLikes, setResourceLikes] = useState(0);
+  const [userResourceLike, setUserResourceLike] = useState(false);
 
   const fetchResource = useCallback(async () => {
     try {
@@ -72,10 +74,25 @@ function SoloResource() {
     }
   }, [comments, user.id]);
 
+  const fetchResourceLikes = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/resources/like/${id}`
+      );
+      setResourceLikes(response.data.length);
+      setUserResourceLike(
+        response.data.some((like) => like.user_id === user.id)
+      );
+    } catch (error) {
+      console.error("Error fetching resource likes:", error);
+    }
+  }, [id, user.id]);
+
   useEffect(() => {
     fetchResource();
     fetchComments();
-  }, [fetchResource, fetchComments]);
+    fetchResourceLikes();
+  }, [fetchResource, fetchComments, fetchResourceLikes]);
 
   useEffect(() => {
     if (comments.length > 0) {
@@ -170,6 +187,29 @@ function SoloResource() {
     }
   };
 
+  const handleLikeResource = async () => {
+    try {
+      const response = await axios.post(
+        `http://localhost:8000/resources/like`,
+        {
+          user_id: user.id,
+          resource_id: id,
+        }
+      );
+      setResourceLikes((prevLikes) =>
+        userResourceLike ? prevLikes - 1 : prevLikes + 1
+      );
+      setUserResourceLike((prevUserLike) => !prevUserLike);
+      if (userResourceLike) {
+        toast.success("Resource unliked!");
+      } else {
+        toast.success("Resource liked!");
+      }
+    } catch (error) {
+      console.error("Error liking/unliking resource:", error);
+    }
+  };
+
   const getCommentLikes = (commentId) => {
     return likes[commentId] || 0;
   };
@@ -184,6 +224,7 @@ function SoloResource() {
       <div className="soloresource-card">
         <h2>{resource.title}</h2>
         <p>{resource.description}</p>
+        <button onClick={handleLikeResource}>Like ({resourceLikes})</button>
       </div>
       <div className="comments-section">
         <h3>Comments</h3>

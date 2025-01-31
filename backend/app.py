@@ -1008,6 +1008,24 @@ def add_resource_like(resource_id: int, user_id: int, db: Session = Depends(get_
     return like
 
 
+@app.post("/resources/like", response_model=ResourceLikeRead)
+def add_or_remove_resource_like(resource_like: ResourceLikeCreate, db: Session = Depends(get_db)):
+    existing_like = db.query(ResourceLike).filter(
+        ResourceLike.resource_id == resource_like.resource_id,
+        ResourceLike.user_id == resource_like.user_id
+    ).first()
+    if existing_like:
+        db.delete(existing_like)
+        db.commit()
+        return existing_like
+
+    new_like = ResourceLike(**resource_like.dict())
+    db.add(new_like)
+    db.commit()
+    db.refresh(new_like)
+    return new_like
+
+
 @app.delete("/resources/like/", response_model=ResourceLikeRead)
 def delete_resource_like(resource_id: int, user_id: int, db: Session = Depends(get_db)):
     like = db.query(ResourceLike).filter(ResourceLike.resource_id ==

@@ -164,6 +164,7 @@
 }
 
 .button-resources {
+  top: 7.5px;
   padding: 10px 15px;
   border: none;
   border-radius: 5px;
@@ -177,7 +178,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
   transition: box-shadow 0.3s ease, border 0.3s ease;
   position: absolute; /* Position buttons absolutely */
-  right: 10px; /* Adjust as needed */
+  right: 10px;
 }
 
 .list-item-resources:hover {
@@ -253,10 +254,6 @@
   box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.3);
   background-color: #76a520;
-}
-
-.delete-button {
-  background-color: #dc3545;
 }
 
 .delete-button:hover {

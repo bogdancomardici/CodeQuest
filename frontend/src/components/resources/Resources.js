@@ -95,6 +95,7 @@ function Resources() {
   }, [user.id]);
 
   useEffect(() => {
+    console.log("User:", user);
     fetchPurchasedResources();
   }, [fetchPurchasedResources]);
 
@@ -104,6 +105,12 @@ function Resources() {
     } else {
       toast.error("You need to buy this resource to access it.");
     }
+  };
+
+  const handleBuyButtonClick = (resource) => {
+    console.log("Selected Resource:", resource);
+    setSelectedResource(resource);
+    setShowBuyModal(true);
   };
 
   const handleDeleteResource = async () => {
@@ -146,8 +153,32 @@ function Resources() {
     }
   };
 
+  const fetchUserData = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/users/${user.id}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return null;
+    }
+  };
+
   const handleBuyResource = async () => {
-    if (user.reward_points >= selectedResource.reward_points) {
+    const userData = await fetchUserData();
+    if (!userData) {
+      toast.error("Failed to fetch user data.");
+      return;
+    }
+
+    console.log("User Reward Points:", userData.reward_points);
+    console.log(
+      "Selected Resource Reward Points:",
+      selectedResource.reward_points
+    );
+
+    if (userData.reward_points >= selectedResource.reward_points) {
       try {
         await axios.post("http://localhost:8000/purchases/", {
           user_id: user.id,
@@ -219,8 +250,7 @@ function Resources() {
                           className="button-resources buy-button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedResource(resource);
-                            setShowBuyModal(true);
+                            handleBuyButtonClick(resource);
                           }}
                         >
                           Buy for {resource.reward_points}
