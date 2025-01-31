@@ -4,6 +4,7 @@ import "./solochallenge.css";
 import { getChallenge, submitCode } from "../../api/challenges";
 import { useAuth } from "../authentification/AuthContext";
 import api from "../../api/apiInstance";
+import { Editor } from "@monaco-editor/react";
 
 function SoloChallenge() {
   const { id } = useParams();
@@ -181,13 +182,15 @@ function SoloChallenge() {
             </button>
           </div>
 
-          <textarea
+          <Editor
+            height="400px"
+            language={challenge.language.toLowerCase()}
+            theme="vs-dark"
             value={code}
-            onChange={(e) => setCode(e.target.value)}
-            rows={20}
-            cols={80}
-            disabled={!isRunning} // Disable textarea when timer is not running
-            className={!isRunning ? "textarea-disabled" : ""} // Apply CSS class when disabled
+            onChange={(newValue) => setCode(newValue)}
+            options={{
+              readOnly: !isRunning,
+            }}
           />
           {output && (
             <div className="output-container">
