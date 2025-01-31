@@ -817,19 +817,15 @@ def get_challenge_comments(challenge_id: int, db: Session = Depends(get_db)):
     return comments
 
 
-@app.post(
-    "/challenges/{challenge_id}/comments",
-    response_model=ChallengeCommentRead,
-)
+@app.post("/challenges/{challenge_id}/comments", response_model=ChallengeCommentRead)
 def add_challenge_comment(
-    challenge_id: int, user_id: int, comment: str, db: Session = Depends(get_db)
+    challenge_id: int,
+    challenge_comment: ChallengeCommentCreate = Body(...),
+    db: Session = Depends(get_db)
 ):
-    db_comment = Comment(user_id=user_id, comment=comment)
-    db.add(db_comment)
-    db.commit()
-    db.refresh(db_comment)
+    # Associate the comment with the challenge
     challenge_comment = ChallengeComment(
-        challenge_id=challenge_id, comment_id=db_comment.id
+        challenge_id=challenge_id, comment_id=challenge_comment.comment_id
     )
     db.add(challenge_comment)
     db.commit()

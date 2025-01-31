@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import "./solochallenge.css";
+import axios from "axios";
 import { getChallenge, submitCode } from "../../api/challenges";
 import { useAuth } from "../authentification/AuthContext";
 import api from "../../api/apiInstance";
@@ -18,6 +19,13 @@ function SoloChallenge() {
   const [isRunning, setIsRunning] = useState(false);
   const [code, setCode] = useState("");
   const [recommendedResources, setRecommendedResources] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [likes, setLikes] = useState({});
+  const [userLikes, setUserLikes] = useState({});
+  const [newComment, setNewComment] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [users, setUsers] = useState({});
 
   useEffect(() => {
     const fetchChallenge = async () => {
@@ -159,6 +167,152 @@ function SoloChallenge() {
     }
   };
 
+  const fetchComments = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/challenges/${id}/comments`
+      );
+      setComments(response.data);
+      const userIds = response.data.map((comment) => comment.user_id);
+      const uniqueUserIds = [...new Set(userIds)];
+      const usersResponse = await Promise.all(
+        uniqueUserIds.map((userId) =>
+          axios.get(`http://localhost:8000/users/${userId}`)
+        )
+      );
+      const usersMap = {};
+      uniqueUserIds.forEach((userId, index) => {
+        usersMap[userId] = usersResponse[index].data;
+      });
+      setUsers(usersMap);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
+  }, [id]);
+
+  const fetchLikes = useCallback(async () => {
+    try {
+      const likesMap = {};
+      const userLikesMap = {};
+      await Promise.all(
+        comments.map(async (comment) => {
+          const response = await axios.get(
+            `http://localhost:8000/comments/${comment.id}/likes`
+          );
+          likesMap[comment.id] = response.data.length;
+          userLikesMap[comment.id] = response.data.some(
+            (like) => like.user_id === user.id
+          );
+        })
+      );
+      setLikes(likesMap);
+      setUserLikes(userLikesMap);
+    } catch (error) {
+      console.error("Error fetching likes:", error);
+    }
+  }, [comments, user.id]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
+
+  useEffect(() => {
+    if (comments.length > 0) {
+      fetchLikes();
+    }
+  }, [comments, fetchLikes]);
+
+  const handleAddComment = async () => {
+    try {
+      const createdCommentResponse = await axios.post(
+        `http://localhost:8000/comments/`,
+        {
+          user_id: user.id,
+          comment: newComment,
+        }
+      );
+      const createdComment = createdCommentResponse.data;
+
+      await axios.post(`http://localhost:8000/challenges/${id}/comments`, {
+        challenge_id: id,
+        comment_id: createdComment.id,
+      });
+
+      setComments([...comments, createdComment]);
+      setNewComment("");
+      toast.success("Comment added successfully!");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment.");
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await axios.delete(`http://localhost:8000/comments/${commentId}`);
+      setComments(comments.filter((comment) => comment.id !== commentId));
+      toast.success("Comment deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      toast.error("Failed to delete comment.");
+    }
+  };
+
+  const handleEditComment = async (commentId) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/comments/${commentId}`,
+        {
+          comment: editingCommentText,
+        }
+      );
+      const updatedComment = response.data;
+
+      setComments(
+        comments.map((comment) =>
+          comment.id === commentId ? updatedComment : comment
+        )
+      );
+      setEditingCommentId(null);
+      setEditingCommentText("");
+      toast.success("Comment edited successfully!");
+    } catch (error) {
+      console.error("Error editing comment:", error);
+      toast.error("Failed to edit comment.");
+    }
+  };
+
+  const handleLikeComment = async (commentId) => {
+    try {
+      const response = await axios.post(`http://localhost:8000/comments/like`, {
+        user_id: user.id,
+        comment_id: commentId,
+      });
+      const liked = response.data;
+      setLikes((prevLikes) => ({
+        ...prevLikes,
+        [commentId]: userLikes[commentId]
+          ? (prevLikes[commentId] || 0) - 1
+          : (prevLikes[commentId] || 0) + 1,
+      }));
+      setUserLikes((prevUserLikes) => ({
+        ...prevUserLikes,
+        [commentId]: !prevUserLikes[commentId],
+      }));
+      if (userLikes[commentId]) {
+        toast.success("Comment unliked!");
+      } else {
+        toast.success("Comment liked!");
+      }
+    } catch (error) {
+      console.error("Error liking/unliking comment:", error);
+    }
+  };
+
+  const getCommentLikes = (commentId) => {
+    return likes[commentId] || 0;
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
@@ -211,6 +365,73 @@ function SoloChallenge() {
               readOnly: !isRunning,
             }}
           />
+        </div>
+        <div className="comments-section">
+          <h3>Comments</h3>
+          {comments.map((comment) => (
+            <div key={comment.id} className="comment-card">
+              <p>
+                <strong>{users[comment.user_id]?.username}</strong> -{" "}
+                {new Date(comment.created_at).toLocaleString()}
+              </p>
+              <p>{comment.comment}</p>
+              <div className="comment-actions">
+                <button onClick={() => handleLikeComment(comment.id)}>
+                  Like ({getCommentLikes(comment.id)})
+                </button>
+                {user.id === comment.user_id && (
+                  <>
+                    <button onClick={() => setEditingCommentId(comment.id)}>
+                      Edit
+                    </button>
+                    <button onClick={() => handleDeleteComment(comment.id)}>
+                      Delete
+                    </button>
+                  </>
+                )}
+                {user.role === "admin" && user.id !== comment.user_id && (
+                  <button
+                    className="delete-button"
+                    onClick={() => handleDeleteComment(comment.id)}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+              {editingCommentId === comment.id && (
+                <div className="edit-comment">
+                  <textarea
+                    value={editingCommentText}
+                    onChange={(e) => setEditingCommentText(e.target.value)}
+                  />
+                  <div className="edit-comment-buttons">
+                    <button
+                      className="save-button"
+                      onClick={() => handleEditComment(comment.id)}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="cancel-button"
+                      onClick={() => setEditingCommentId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          <div className="add-comment">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Add a comment..."
+            />
+            <button className="add-button" onClick={handleAddComment}>
+              Add Comment
+            </button>
+          </div>
         </div>
       </div>
       <ToastContainer />
