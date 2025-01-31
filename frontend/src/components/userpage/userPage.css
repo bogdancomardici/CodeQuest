@@ -269,6 +269,28 @@
   background-color: #0056b3;
 }
 
+.admin-section::-webkit-scrollbar {
+  width: 12px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+.admin-section::-webkit-scrollbar-track {
+  background: rgba(45, 45, 45, 0.5); /* Darker gray with transparency */
+  border-radius: 16px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.admin-section::-webkit-scrollbar-thumb {
+  background-color: #0056b3; /* Dark blue color */
+  border-radius: 16px;
+  border: 3px solid rgba(45, 45, 45, 0.5); /* Darker gray with transparency */
+}
+
+.admin-section::-webkit-scrollbar-thumb:hover {
+  background-color: #004494; /* Darker blue on hover */
+}
+
 @media (max-width: 1400px) {
   .user-profile-card,
   .friends-section,
