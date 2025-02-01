@@ -117,6 +117,8 @@
 .comment-actions {
   display: flex;
   gap: 10px;
+  align-items: center;
+  min-height: 40px;
 }
 
 .edit-comment {
@@ -172,7 +174,7 @@ button {
 
 .edit-button,
 .like-button,
-.add-butotn,
+.add-button,
 .timer-button.start {
   background-color: #007bff;
 }

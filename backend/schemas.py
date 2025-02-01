@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 
 
 class UserCreate(BaseModel):
@@ -102,6 +102,7 @@ class ChallengeCreate(BaseModel):
     output: str
     difficulty: str
     language: str
+    tags: List[int]
 
 
 class ChallengeRead(BaseModel):
@@ -112,6 +113,7 @@ class ChallengeRead(BaseModel):
     output: str
     difficulty: str
     language: str
+    tags: List[int]
 
     class Config:
         from_attributes = True
@@ -130,6 +132,7 @@ class ResourceCreate(BaseModel):
     title: str
     description: str
     reward_points: int
+    tags: List[int]
 
 
 class ResourceRead(BaseModel):
@@ -381,3 +384,19 @@ class CommentLikeDelete(BaseModel):
 
 class PointsUpdate(BaseModel):
     points: int
+
+
+class TagRead(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class TagCreate(BaseModel):
+    name: str
+
+
+class TagUpdate(BaseModel):
+    name: str = None

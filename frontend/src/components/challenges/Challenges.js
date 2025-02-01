@@ -41,17 +41,82 @@ function Challenges() {
     output: "",
     difficulty: "",
     language: "",
+    tags: [],
   });
-
+  const [newTag, setNewTag] = useState("");
   const [showFriendsModal, setShowFriendsModal] = useState(false);
   const [friends, setFriends] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [currentChallengeId, setCurrentChallengeId] = useState(null);
-
   const { user } = useAuth();
   const navigate = useNavigate();
-
   const [likes, setLikes] = useState({});
+  const [tags, setTags] = useState([]);
+  const [challengeTags, setChallengeTags] = useState({});
+
+  const fetchTags = useCallback(async () => {
+    try {
+      const response = await axios.get("http://localhost:8000/tags/");
+      setTags(response.data);
+    } catch (error) {
+      console.error("Error fetching tags:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
+  const fetchChallengeTags = useCallback(async () => {
+    try {
+      const tagsMap = {};
+      await Promise.all(
+        allChallenges.map(async (challenge) => {
+          const response = await axios.get(
+            `http://localhost:8000/challenges/${challenge.id}/tags`
+          );
+          tagsMap[challenge.id] = response.data;
+        })
+      );
+      setChallengeTags(tagsMap);
+    } catch (error) {
+      console.error("Error fetching challenge tags:", error);
+    }
+  }, [allChallenges]);
+
+  useEffect(() => {
+    fetchChallengeTags();
+  }, [allChallenges, fetchChallengeTags]);
+
+  const handleTagChange = (e) => {
+    const { options } = e.target;
+    const selectedTags = [];
+    for (const option of options) {
+      if (option.selected) {
+        selectedTags.push(parseInt(option.value, 10));
+      }
+    }
+    setNewChallenge((prev) => ({ ...prev, tags: selectedTags }));
+  };
+
+  const handleAddTag = async () => {
+    if (newTag.trim() === "") {
+      toast.error("Tag name cannot be empty.");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:8000/tags/", {
+        name: newTag,
+      });
+      setTags((prevTags) => [...prevTags, response.data]);
+      setNewTag("");
+      toast.success("Tag added successfully!");
+    } catch (error) {
+      console.error("Error adding tag:", error);
+      toast.error("Failed to add tag.");
+    }
+  };
 
   const fetchLikes = useCallback(async () => {
     try {
@@ -124,16 +189,24 @@ function Challenges() {
       );
     }
 
+    if (filter.tag) {
+      filtered = filtered.filter(
+        (ch) =>
+          challengeTags[ch.id] &&
+          challengeTags[ch.id].some((tag) => tag.name === filter.tag)
+      );
+    }
+
     if (filter.sortBy === "latest") {
       filtered.sort((a, b) => b.id - a.id);
     } else if (filter.sortBy === "oldest") {
       filtered.sort((a, b) => a.id - b.id);
     } else if (filter.sortBy === "mostLiked") {
-      filtered.sort((a, b) => (likes[b.id] || 0) - (likes[a.id] || 0)); // Add this line
+      filtered.sort((a, b) => (likes[b.id] || 0) - (likes[a.id] || 0));
     }
 
     return filtered;
-  }, [allChallenges, searchTerm, filter, likes]);
+  }, [allChallenges, searchTerm, filter, likes, challengeTags]);
 
   const startIndex = page * challengesPerPage;
   const endIndex = startIndex + challengesPerPage;
@@ -150,10 +223,18 @@ function Challenges() {
   }, [endIndex, filteredSortedChallenges]);
 
   const handleAddChallenge = async () => {
-    try {
-      const challengeToSubmit = { ...newChallenge };
-      await addChallenge(challengeToSubmit);
+    const challengeToSubmit = {
+      title: newChallenge.title,
+      description: newChallenge.description,
+      input: newChallenge.input,
+      output: newChallenge.output,
+      difficulty: newChallenge.difficulty,
+      language: newChallenge.language,
+      tags: newChallenge.tags, // Include tags in the challenge submission
+    };
 
+    try {
+      await addChallenge(challengeToSubmit);
       toast.success("Challenge added successfully!");
       setShowModal(false);
       setNewChallenge({
@@ -163,6 +244,7 @@ function Challenges() {
         output: "",
         difficulty: "",
         language: "",
+        tags: [], // Reset tags
       });
       setPage(0);
 
@@ -301,6 +383,20 @@ function Challenges() {
                   <option value="Medium">Medium</option>
                   <option value="Hard">Hard</option>
                 </select>
+
+                <select
+                  name="tag"
+                  className="filter-dropdown"
+                  value={filter.tag}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">All Tags</option>
+                  {tags.map((tag) => (
+                    <option key={tag.id} value={tag.name}>
+                      {tag.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -375,6 +471,48 @@ function Challenges() {
 
         <div className="grid-item-challenges invisible-challenges"></div>
       </div>
+
+      <Modal
+        show={showFriendsModal}
+        onHide={() => setShowFriendsModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Challenge a Friend</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group>
+              <Form.Label>Select Friends</Form.Label>
+              <List>
+                {friends.map((friend) => (
+                  <ListItem
+                    key={friend.id}
+                    button
+                    onClick={() => handleFriendToggle(friend.username)}
+                  >
+                    <Checkbox
+                      checked={selectedFriends.includes(friend.username)}
+                    />
+                    <ListItemText primary={friend.username} />
+                  </ListItem>
+                ))}
+              </List>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowFriendsModal(false)}
+          >
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleChallengeFriend}>
+            Challenge
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
@@ -475,6 +613,40 @@ function Challenges() {
                 }
               />
             </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Add New Tag</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter new tag"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+              />
+              <Button
+                className="tag-button"
+                variant="primary"
+                onClick={handleAddTag}
+              >
+                Add Tag
+              </Button>
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Tags</Form.Label>
+              <Form.Control
+                className="tag-select"
+                as="select"
+                multiple
+                value={newChallenge.tags}
+                onChange={handleTagChange}
+              >
+                {tags.map((tag) => (
+                  <option key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -483,44 +655,6 @@ function Challenges() {
           </Button>
           <Button variant="primary" onClick={handleAddChallenge}>
             Add Challenge
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Modal
-        show={showFriendsModal}
-        onHide={() => {
-          setShowFriendsModal(false);
-          setSelectedFriends([]);
-        }}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Select Friends to Challenge</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <List>
-            {friends.map((friend) => (
-              <ListItem
-                key={friend.id}
-                button
-                onClick={() => handleFriendToggle(friend.username)}
-              >
-                <Checkbox checked={selectedFriends.includes(friend.username)} />
-                <ListItemText primary={friend.username} />
-              </ListItem>
-            ))}
-          </List>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowFriendsModal(false)}
-          >
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleChallengeFriend}>
-            Challenge Friends
           </Button>
         </Modal.Footer>
       </Modal>

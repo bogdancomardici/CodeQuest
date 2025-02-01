@@ -16,9 +16,11 @@ import "./resources.css";
 
 function Resources() {
   const [allResources, setAllResources] = useState([]);
+  const [resourceTags, setResourceTags] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState({
     sortBy: "latest",
+    tag: "",
   });
   const [page, setPage] = useState(0);
   const resourcesPerPage = 5;
@@ -29,13 +31,50 @@ function Resources() {
     title: "",
     description: "",
     reward_points: 0,
+    tags: [],
   });
+  const [newTag, setNewTag] = useState("");
   const [selectedResource, setSelectedResource] = useState(null);
   const [purchasedResources, setPurchasedResources] = useState([]);
   const [isLastPage, setIsLastPage] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [likes, setLikes] = useState({});
+  const [tags, setTags] = useState([]);
+
+  const fetchTags = useCallback(async () => {
+    try {
+      const response = await axios.get("http://localhost:8000/tags/");
+      setTags(response.data);
+    } catch (error) {
+      console.error("Error fetching tags:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
+  const fetchResourceTags = useCallback(async () => {
+    try {
+      const tagsMap = {};
+      await Promise.all(
+        allResources.map(async (resource) => {
+          const response = await axios.get(
+            `http://localhost:8000/resources/${resource.id}/tags`
+          );
+          tagsMap[resource.id] = response.data;
+        })
+      );
+      setResourceTags(tagsMap);
+    } catch (error) {
+      console.error("Error fetching resource tags:", error);
+    }
+  }, [allResources]);
+
+  useEffect(() => {
+    fetchResourceTags();
+  }, [allResources, fetchResourceTags]);
 
   const fetchLikes = useCallback(async () => {
     try {
@@ -72,9 +111,15 @@ function Resources() {
       const lowerDesc = resource.description.toLowerCase();
       const lowerSearch = searchTerm.toLowerCase();
 
-      return (
-        lowerTitle.includes(lowerSearch) || lowerDesc.includes(lowerSearch)
-      );
+      const matchesSearch =
+        lowerTitle.includes(lowerSearch) || lowerDesc.includes(lowerSearch);
+
+      const matchesTag =
+        !filter.tag ||
+        (resourceTags[resource.id] &&
+          resourceTags[resource.id].some((tag) => tag.name === filter.tag));
+
+      return matchesSearch && matchesTag;
     });
 
     console.log("Filtered Resources:", filtered);
@@ -94,7 +139,7 @@ function Resources() {
     console.log("Sorted Resources:", sorted);
 
     return sorted;
-  }, [allResources, searchTerm, filter, likes]);
+  }, [allResources, searchTerm, filter, likes, resourceTags]);
 
   const startIndex = page * resourcesPerPage;
   const endIndex = startIndex + resourcesPerPage;
@@ -161,6 +206,7 @@ function Resources() {
       title: newResource.title,
       description: newResource.description,
       reward_points: newResource.reward_points,
+      tags: newResource.tags,
     };
 
     try {
@@ -171,6 +217,7 @@ function Resources() {
         title: "",
         description: "",
         reward_points: 0,
+        tags: [],
       });
       setPage(0);
 
@@ -236,6 +283,36 @@ function Resources() {
     setPage(0);
   };
 
+  const handleTagChange = (e) => {
+    const { options } = e.target;
+    const selectedTags = [];
+    for (const option of options) {
+      if (option.selected) {
+        selectedTags.push(parseInt(option.value, 10));
+      }
+    }
+    setNewResource((prev) => ({ ...prev, tags: selectedTags }));
+  };
+
+  const handleAddTag = async () => {
+    if (newTag.trim() === "") {
+      toast.error("Tag name cannot be empty.");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:8000/tags/", {
+        name: newTag,
+      });
+      setTags((prevTags) => [...prevTags, response.data]);
+      setNewTag("");
+      toast.success("Tag added successfully!");
+    } catch (error) {
+      console.error("Error adding tag:", error);
+      toast.error("Failed to add tag.");
+    }
+  };
+
   return (
     <div className="resources-container">
       <div className="grid-layout-resources">
@@ -261,6 +338,19 @@ function Resources() {
                   <option value="latest">Latest</option>
                   <option value="oldest">Oldest</option>
                   <option value="mostLiked">Most Liked</option>
+                </select>
+                <select
+                  name="tag"
+                  className="filter-dropdown"
+                  value={filter.tag}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">All Tags</option>
+                  {tags.map((tag) => (
+                    <option key={tag.id} value={tag.name}>
+                      {tag.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -391,13 +481,51 @@ function Resources() {
                 }
               />
             </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Add New Tag</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter new tag"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+              />
+              <Button
+                className="tag-button"
+                variant="primary"
+                onClick={handleAddTag}
+              >
+                Add Tag
+              </Button>
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Tags</Form.Label>
+              <Form.Control
+                className="tag-select"
+                as="select"
+                multiple
+                value={newResource.tags}
+                onChange={handleTagChange}
+              >
+                {tags.map((tag) => (
+                  <option key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowAddModal(false)}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleAddResource}>
+          <Button
+            className="tag-button"
+            variant="primary"
+            onClick={handleAddResource}
+          >
             Add Resource
           </Button>
         </Modal.Footer>

@@ -1,12 +1,34 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import axios from "axios";
 import { getAllUsersOrderedByPoints } from "../../api/users";
+import { useAuth } from "../authentification/AuthContext"; // Import useAuth
 import "./leaderboard.css";
 
 function Leaderboard() {
+  const { user } = useAuth(); // Get user from useAuth
   const [allUsers, setAllUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
   const usersPerPage = 5;
+  const [filter, setFilter] = useState("Global");
+  const [friends, setFriends] = useState([]);
+
+  const fetchFriends = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/users/${user.id}/friends`
+      );
+      setFriends(response.data);
+    } catch (error) {
+      console.error("Error fetching friends:", error);
+    }
+  }, [user.id]);
+
+  useEffect(() => {
+    if (filter === "Friends") {
+      fetchFriends();
+    }
+  }, [filter, fetchFriends]);
 
   useEffect(() => {
     const fetchAllUsers = async () => {
@@ -21,9 +43,18 @@ function Leaderboard() {
     fetchAllUsers();
   }, []);
 
-  const filteredUsers = allUsers.filter((user) =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    let users = allUsers;
+
+    if (filter === "Friends") {
+      const friendIds = friends.map((friend) => friend.id);
+      users = users.filter((user) => friendIds.includes(user.id));
+    }
+
+    return users.filter((user) =>
+      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [allUsers, friends, filter, searchTerm]);
 
   const startIndex = page * usersPerPage;
   const endIndex = startIndex + usersPerPage;
@@ -63,6 +94,17 @@ function Leaderboard() {
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
+              <div className="filter-container">
+                <select
+                  name="filter"
+                  className="filter-dropdown"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                >
+                  <option value="Global">Global</option>
+                  <option value="Friends">Friends</option>
+                </select>
+              </div>
             </div>
 
             <div className="list-container-leaderboard">

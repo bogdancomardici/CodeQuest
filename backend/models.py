@@ -69,11 +69,10 @@ class Tag(Base):
     __tablename__ = "tags"
     id = Column(Integer, Sequence("tag_id_seq"), primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
-    challenges = relationship(
-        "Challenge", secondary="challengetag", back_populates="tags"
-    )
-    resources = relationship(
-        "Resource", secondary="resourcetag", back_populates="tags")
+    challenges = relationship("Challenge", secondary="challengetag",
+                              back_populates="tags")
+    resources = relationship("Resource", secondary="resourcetag",
+                             back_populates="tags")
 
 
 class ChallengeTag(Base):

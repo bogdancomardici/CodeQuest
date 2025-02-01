@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from schemas import CommentLikeCreate, CommentLikeDelete, CommentLikeRead, NotificationCreate, NotificationRead, PointsUpdate, PurchaseCreate, PurchaseRead
+from schemas import CommentLikeCreate, CommentLikeDelete, CommentLikeRead, NotificationCreate, NotificationRead, PointsUpdate, PurchaseCreate, PurchaseRead, TagCreate, TagRead
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Query, Body
 from typing import List, Optional
@@ -7,10 +7,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from models import (
     Base,
+    ChallengeTag,
     CommentLike,
     Notification,
     Purchase,
     ResourceTag,
+    Tag,
     engine,
     SessionLocal,
     User,
@@ -79,7 +81,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 logger.info(f"DATABASE_URL: {DATABASE_URL}")
 
 JUDGE0_URL = os.getenv("JUDGE0_URL")
-RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 
 app = FastAPI()
 security = HTTPBasic()
@@ -324,13 +325,40 @@ def create_challenge(ch_data: ChallengeCreate, db: Session = Depends(get_db)):
     db.add(db_challenge)
     db.commit()
     db.refresh(db_challenge)
-    return db_challenge
+
+    # Associate tags with the challenge
+    for tag_id in ch_data.tags:
+        challenge_tag = ChallengeTag(
+            challenge_id=db_challenge.id, tag_id=tag_id)
+        db.add(challenge_tag)
+    db.commit()
+
+    # Fetch the tags to include in the response
+    tag_ids = [tag.tag_id for tag in db.query(
+        ChallengeTag).filter_by(challenge_id=db_challenge.id).all()]
+
+    return {
+        "id": db_challenge.id,
+        "title": db_challenge.title,
+        "description": db_challenge.description,
+        "input": db_challenge.input,
+        "output": db_challenge.output,
+        "difficulty": db_challenge.difficulty,
+        "language": db_challenge.language,
+        "tags": tag_ids
+    }
 
 
 @app.get("/challenges/", response_model=List[ChallengeRead])
 def read_challenges(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     challenges = db.query(Challenge).offset(skip).limit(limit).all()
-    return challenges
+    challenge_list = []
+    for challenge in challenges:
+        challenge_dict = challenge.__dict__.copy()
+        challenge_dict['tags'] = [tag.tag_id for tag in db.query(
+            ChallengeTag).filter_by(challenge_id=challenge.id).all()]
+        challenge_list.append(challenge_dict)
+    return challenge_list
 
 
 @app.get("/challenges/filter", response_model=List[ChallengeRead])
@@ -404,11 +432,14 @@ def get_challenges_likes(db: Session = Depends(get_db)):
 
 @app.get("/challenges/{challenge_id}", response_model=ChallengeRead)
 def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
-    db_challenge = db.query(Challenge).filter(
+    challenge = db.query(Challenge).filter(
         Challenge.id == challenge_id).first()
-    if db_challenge is None:
-        raise HTTPException(status_code=404, detail="challenge not found")
-    return db_challenge
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    challenge_dict = challenge.__dict__.copy()
+    challenge_dict['tags'] = [tag.tag_id for tag in db.query(
+        ChallengeTag).filter_by(challenge_id=challenge.id).all()]
+    return challenge_dict
 
 
 @app.put("/challenges/{challenge_id}", response_model=ChallengeRead)
@@ -453,7 +484,39 @@ def create_resource(resource: ResourceCreate, db: Session = Depends(get_db)):
     db.add(db_resource)
     db.commit()
     db.refresh(db_resource)
+
+    # Associate tags with the resource
+    for tag_id in resource.tags:
+        resource_tag = ResourceTag(resource_id=db_resource.id, tag_id=tag_id)
+        db.add(resource_tag)
+    db.commit()
+
     return db_resource
+
+
+@app.get("/tags/", response_model=List[TagRead])
+def read_tags(db: Session = Depends(get_db)):
+    tags = db.query(Tag).all()
+    return tags
+
+
+@app.post("/tags/", response_model=TagRead)
+def create_tag(tag: TagCreate, db: Session = Depends(get_db)):
+    db_tag = db.query(Tag).filter(Tag.name == tag.name).first()
+    if db_tag:
+        raise HTTPException(status_code=400, detail="Tag already exists")
+    new_tag = Tag(name=tag.name)
+    db.add(new_tag)
+    db.commit()
+    db.refresh(new_tag)
+    return new_tag
+
+
+@app.get("/resources/{resource_id}/tags", response_model=List[TagRead])
+def read_resource_tags(resource_id: int, db: Session = Depends(get_db)):
+    resource_tags = db.query(Tag).join(ResourceTag).filter(
+        ResourceTag.resource_id == resource_id).all()
+    return resource_tags
 
 
 @app.get("/resources/likes", response_model=List[dict])
@@ -609,7 +672,6 @@ def submit_code(
 
     create_submission = requests.post(
         f"{JUDGE0_URL}/submissions?base64_encoded=true&wait=true",
-        headers={"X-RapidAPI-Key": RAPID_API_KEY},
         json={
             "source_code": code_b64,
             "language_id": get_language_id(db_challenge.language),
@@ -631,7 +693,6 @@ def submit_code(
 
     result = requests.get(
         f"{JUDGE0_URL}/submissions/{submission_token}?base64_encoded=false",
-        headers={"X-RapidAPI-Key": RAPID_API_KEY},
     )
 
     if result.status_code != 200:
@@ -710,6 +771,13 @@ def submit_code(
         "points_awarded": points_awarded,
         "badge_awarded": badge_awarded,
     }
+
+
+@app.get("/challenges/{challenge_id}/tags", response_model=List[TagRead])
+def read_challenge_tags(challenge_id: int, db: Session = Depends(get_db)):
+    tags = db.query(Tag).join(ChallengeTag).filter(
+        ChallengeTag.challenge_id == challenge_id).all()
+    return tags
 
 
 @app.get(
