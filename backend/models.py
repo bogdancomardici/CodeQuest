@@ -15,9 +15,9 @@ from sqlalchemy.orm import relationship, sessionmaker
 import os
 
 # SWAP DATABASE_URL IF RUNNING IN DOCKER
-DATABASE_URL = "postgresql://postgres:admin@localhost:5433/test_db"
+# DATABASE_URL = "postgresql://postgres:admin@localhost:5433/test_db"
 
-# DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
