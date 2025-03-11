@@ -19,6 +19,7 @@ import "./challenges.css";
 
 function Challenges() {
   const [allChallenges, setAllChallenges] = useState([]);
+  const [solvedChallenges, setSolvedChallenges] = useState([]);
 
   const [page, setPage] = useState(0);
   const challengesPerPage = 5;
@@ -29,6 +30,8 @@ function Challenges() {
     sortBy: "latest",
     language: "",
     difficulty: "",
+    tag: "",
+    solvedStatus: "all",
   });
 
   const [isLastPage, setIsLastPage] = useState(false);
@@ -53,6 +56,21 @@ function Challenges() {
   const [likes, setLikes] = useState({});
   const [tags, setTags] = useState([]);
   const [challengeTags, setChallengeTags] = useState({});
+
+  useEffect(() => {
+    const fetchSolvedChallenges = async () => {
+      if (!user) return;
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/users/${user.id}/solved-challenges`
+        );
+        setSolvedChallenges(response.data.map((challenge) => challenge.id));
+      } catch (error) {
+        console.error("Error fetching solved challenges:", error);
+      }
+    };
+    fetchSolvedChallenges();
+  }, [user]);
 
   const fetchTags = useCallback(async () => {
     try {
@@ -197,6 +215,12 @@ function Challenges() {
       );
     }
 
+    if (filter.solvedStatus === "solved") {
+      filtered = filtered.filter((ch) => solvedChallenges.includes(ch.id));
+    } else if (filter.solvedStatus === "unsolved") {
+      filtered = filtered.filter((ch) => !solvedChallenges.includes(ch.id));
+    }
+
     if (filter.sortBy === "latest") {
       filtered.sort((a, b) => b.id - a.id);
     } else if (filter.sortBy === "oldest") {
@@ -206,7 +230,14 @@ function Challenges() {
     }
 
     return filtered;
-  }, [allChallenges, searchTerm, filter, likes, challengeTags]);
+  }, [
+    allChallenges,
+    searchTerm,
+    filter,
+    likes,
+    challengeTags,
+    solvedChallenges,
+  ]);
 
   const startIndex = page * challengesPerPage;
   const endIndex = startIndex + challengesPerPage;
@@ -346,6 +377,16 @@ function Challenges() {
 
               <div className="filter-container">
                 <select
+                  name="solvedStatus"
+                  className="filter-dropdown"
+                  value={filter.solvedStatus}
+                  onChange={handleFilterChange}
+                >
+                  <option value="all">All Challenges</option>
+                  <option value="solved">Solved Challenges</option>
+                  <option value="unsolved">Unsolved Challenges</option>
+                </select>
+                <select
                   name="sortBy"
                   className="filter-dropdown"
                   value={filter.sortBy}
@@ -403,7 +444,12 @@ function Challenges() {
             <div className="list-container-challenges">
               <ul className="list-challenges">
                 {currentPageChallenges.map((challenge) => (
-                  <li key={challenge.id} className="list-item-challenges">
+                  <li
+                    key={challenge.id}
+                    className={`list-item-challenges ${
+                      solvedChallenges.includes(challenge.id) ? "solved" : ""
+                    }`}
+                  >
                     <span>{challenge.title}</span>
                     <span>{challenge.language}</span>
                     <span>{challenge.difficulty}</span>

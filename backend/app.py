@@ -1206,3 +1206,16 @@ def delete_user_challenge(user_id: int, challenge_id: int, db: Session = Depends
     db.delete(user_challenge)
     db.commit()
     return user_challenge
+
+
+@app.get("/users/{user_id}/solved-challenges", response_model=List[ChallengeRead])
+def get_user_solved_challenges(user_id: int, db: Session = Depends(get_db)):
+    solved_challenges = db.query(Challenge).join(UserChallenge).filter(
+        UserChallenge.user_id == user_id).all()
+    challenge_list = []
+    for challenge in solved_challenges:
+        challenge_dict = challenge.__dict__.copy()
+        challenge_dict['tags'] = [tag.tag_id for tag in db.query(
+            ChallengeTag).filter_by(challenge_id=challenge.id).all()]
+        challenge_list.append(challenge_dict)
+    return challenge_list
