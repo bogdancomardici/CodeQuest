@@ -321,7 +321,12 @@ function UsersPage() {
                     <div className="demote-buttons">
                       {
                         <button
-                          onClick={() => handleRoleChange(u.id, "expert")}
+                          onClick={() =>
+                            handleRoleChange(
+                              u.id,
+                              u.role === "admin" ? "expert" : "user"
+                            )
+                          }
                           className="demote-button"
                           disabled={u.role === "user"}
                         >
