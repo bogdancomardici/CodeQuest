@@ -182,10 +182,38 @@ function UsersPage() {
   if (error) {
     return <div>{error}</div>;
   }
-
   return (
     <div className="user-page-container">
       <ToastContainer />
+      <div className="search-section">
+        <h3>Search Users</h3>
+        <div className="search-bar">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by username"
+          />
+        </div>
+        <div className="search-results">
+          <ul>
+            {searchResults.length === 0 && searchTerm && (
+              <li>No user found with searched name</li>
+            )}
+            {searchResults.map((result) => (
+              <li key={result.id}>
+                {result.username}
+                <button
+                  onClick={() => handleAddFriend(result.username)}
+                  className="button-add-friend"
+                >
+                  Add Friend
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
       <div className="user-page-grid">
         <div className="user-profile-card">
           <h2>User Profile</h2>
@@ -237,35 +265,6 @@ function UsersPage() {
             </div>
           )}
         </div>
-        <div className="search-section">
-          <h3>Search Users</h3>
-          <div className="search-bar">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by username"
-            />
-          </div>
-          <div className="search-results">
-            <ul>
-              {searchResults.length === 0 && searchTerm && (
-                <li>No user found with searched name</li>
-              )}
-              {searchResults.map((result) => (
-                <li key={result.id}>
-                  {result.username}
-                  <button
-                    onClick={() => handleAddFriend(result.username)}
-                    className="button-add-friend"
-                  >
-                    Add Friend
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
         <div className="friends-section">
           <h3>Friends</h3>
           <ul>
@@ -305,7 +304,7 @@ function UsersPage() {
                       {u.role === "user" && (
                         <button
                           onClick={() => handleRoleChange(u.id, "expert")}
-                          className="button-challenges"
+                          className="promote-button"
                         >
                           Make Expert
                         </button>
@@ -313,7 +312,7 @@ function UsersPage() {
                       {u.role === "expert" && (
                         <button
                           onClick={() => handleRoleChange(u.id, "admin")}
-                          className="button-challenges"
+                          className="promote-button"
                         >
                           Make Admin
                         </button>
@@ -323,7 +322,7 @@ function UsersPage() {
                       {
                         <button
                           onClick={() => handleRoleChange(u.id, "expert")}
-                          className="button-challenges"
+                          className="demote-button"
                           disabled={u.role === "user"}
                         >
                           Demote
