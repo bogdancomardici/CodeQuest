@@ -149,6 +149,7 @@ def create_notification(
         message=notification.message,
         link=notification.link,
         challenger_username=notification.challenger_username,
+        challenge_id=notification.challenge_id
     )
     db.add(db_notification)
     db.commit()
@@ -1215,6 +1216,25 @@ def get_user_solved_challenges(user_id: int, db: Session = Depends(get_db)):
     challenge_list = []
     for challenge in solved_challenges:
         challenge_dict = challenge.__dict__.copy()
+        challenge_dict['tags'] = [tag.tag_id for tag in db.query(
+            ChallengeTag).filter_by(challenge_id=challenge.id).all()]
+        challenge_list.append(challenge_dict)
+    return challenge_list
+
+
+@app.get("/users/{user_id}/sent-challenges", response_model=List[ChallengeRead])
+def get_user_sent_challenges(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    sent_challenges = db.query(Challenge, User.username.label("friend_username")).join(Notification, Notification.challenge_id == Challenge.id).join(
+        User, User.id == Notification.recipient_id).filter(Notification.challenger_username == user.username).all()
+
+    challenge_list = []
+    for challenge, friend_username in sent_challenges:
+        challenge_dict = challenge.__dict__.copy()
+        challenge_dict['friend_username'] = friend_username
         challenge_dict['tags'] = [tag.tag_id for tag in db.query(
             ChallengeTag).filter_by(challenge_id=challenge.id).all()]
         challenge_list.append(challenge_dict)

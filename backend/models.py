@@ -132,6 +132,7 @@ class Notification(Base):
     read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     challenger_username = Column(String(50))
+    challenge_id = Column(Integer, ForeignKey("challenges.id"))
 
     recipient = relationship("User", back_populates="notifications")
 

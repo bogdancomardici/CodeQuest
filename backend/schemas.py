@@ -114,6 +114,7 @@ class ChallengeRead(BaseModel):
     difficulty: str
     language: str
     tags: List[int]
+    friend_username: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -234,6 +235,7 @@ class NotificationCreate(BaseModel):
     message: str
     link: str
     challenger_username: str
+    challenge_id: int
 
 
 class NotificationRead(BaseModel):

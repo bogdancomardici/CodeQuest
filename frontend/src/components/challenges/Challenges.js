@@ -72,6 +72,32 @@ function Challenges() {
     fetchSolvedChallenges();
   }, [user]);
 
+  useEffect(() => {
+    const fetchSentChallenges = async () => {
+      if (filter.solvedStatus === "sent" && user) {
+        try {
+          const response = await axios.get(
+            `http://localhost:8000/users/${user.id}/sent-challenges`
+          );
+          setAllChallenges(response.data);
+        } catch (error) {
+          console.error("Error fetching sent challenges:", error);
+        }
+      } else {
+        const fetchAll = async () => {
+          try {
+            const data = await getAllChallenges();
+            setAllChallenges(data);
+          } catch (error) {
+            console.error("Error fetching challenges:", error);
+          }
+        };
+        fetchAll();
+      }
+    };
+    fetchSentChallenges();
+  }, [filter.solvedStatus, user]);
+
   const fetchTags = useCallback(async () => {
     try {
       const response = await axios.get("http://localhost:8000/tags/");
@@ -335,6 +361,7 @@ function Challenges() {
             message: `You have been challenged to "${challenge.title}" challenge by "${user.username}"!`,
             link: `/soloChallenge/${currentChallengeId}`,
             challenger_username: user.username,
+            challenge_id: currentChallengeId,
           });
         })
       );
@@ -385,6 +412,7 @@ function Challenges() {
                   <option value="all">All Challenges</option>
                   <option value="solved">Solved Challenges</option>
                   <option value="unsolved">Unsolved Challenges</option>
+                  <option value="sent">Sent Challenges</option>
                 </select>
                 <select
                   name="sortBy"
@@ -453,6 +481,9 @@ function Challenges() {
                     <span>{challenge.title}</span>
                     <span>{challenge.language}</span>
                     <span>{challenge.difficulty}</span>
+                    {challenge.friend_username && (
+                      <span>Sent to: {challenge.friend_username}</span>
+                    )}
                     <div className="button-container-challenges">
                       <button
                         className="button-challenges solo-button"
