@@ -294,60 +294,47 @@ function UsersPage() {
               placeholder="Search by username"
             />
           </div>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Role</th>
-                <th>Promote</th>
-                <th>Demote</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div className="list-container-challenges">
+            <ul className="list-challenges">
               {filteredAdminUsers.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.username}</td>
-                  <td>{u.role}</td>
-                  <td>
-                    {u.role === "user" && (
-                      <button
-                        onClick={() => handleRoleChange(u.id, "expert")}
-                        className="promote-button"
-                      >
-                        Make Expert
-                      </button>
-                    )}
-                    {u.role === "expert" && (
-                      <button
-                        onClick={() => handleRoleChange(u.id, "admin")}
-                        className="promote-button"
-                      >
-                        Make Admin
-                      </button>
-                    )}
-                  </td>
-                  <td>
-                    {u.role === "expert" && (
-                      <button
-                        onClick={() => handleRoleChange(u.id, "user")}
-                        className="demote-button"
-                      >
-                        Demote
-                      </button>
-                    )}
-                    {u.role === "admin" && (
-                      <button
-                        onClick={() => handleRoleChange(u.id, "expert")}
-                        className="demote-button"
-                      >
-                        Demote
-                      </button>
-                    )}
-                  </td>
-                </tr>
+                <li key={u.id} className="list-item-challenges">
+                  <span>{u.username}</span>
+                  <span>{u.role}</span>
+                  <div className="button-container-challenges">
+                    <div className="promote-buttons">
+                      {u.role === "user" && (
+                        <button
+                          onClick={() => handleRoleChange(u.id, "expert")}
+                          className="button-challenges"
+                        >
+                          Make Expert
+                        </button>
+                      )}
+                      {u.role === "expert" && (
+                        <button
+                          onClick={() => handleRoleChange(u.id, "admin")}
+                          className="button-challenges"
+                        >
+                          Make Admin
+                        </button>
+                      )}
+                    </div>
+                    <div className="demote-buttons">
+                      {
+                        <button
+                          onClick={() => handleRoleChange(u.id, "expert")}
+                          className="button-challenges"
+                          disabled={u.role === "user"}
+                        >
+                          Demote
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </li>
               ))}
-            </tbody>
-          </table>
+            </ul>
+          </div>
         </div>
       )}
     </div>
