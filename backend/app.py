@@ -1239,3 +1239,22 @@ def get_user_sent_challenges(user_id: int, db: Session = Depends(get_db)):
             ChallengeTag).filter_by(challenge_id=challenge.id).all()]
         challenge_list.append(challenge_dict)
     return challenge_list
+
+
+@app.get("/users/{user_id}/received-challenges", response_model=List[ChallengeRead])
+def get_user_received_challenges(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    received_challenges = db.query(Challenge, Notification.challenger_username.label("challenger_username")).join(
+        Notification, Notification.challenge_id == Challenge.id).filter(Notification.recipient_id == user.id).all()
+
+    challenge_list = []
+    for challenge, challenger_username in received_challenges:
+        challenge_dict = challenge.__dict__.copy()
+        challenge_dict['challenger_username'] = challenger_username
+        challenge_dict['tags'] = [tag.tag_id for tag in db.query(
+            ChallengeTag).filter_by(challenge_id=challenge.id).all()]
+        challenge_list.append(challenge_dict)
+    return challenge_list
