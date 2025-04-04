@@ -471,9 +471,15 @@ function Challenges() {
 
             <div className="list-container-challenges">
               <ul className="list-challenges">
-                {currentPageChallenges.map((challenge) => (
+                {currentPageChallenges.map((challenge, index) => (
                   <li
-                    key={challenge.id}
+                    key={`${challenge.id}-${
+                      challenge.isSent
+                        ? "sent"
+                        : challenge.isReceived
+                        ? "received"
+                        : "normal"
+                    }-${index}`}
                     className={`list-item-challenges ${
                       solvedChallenges.includes(challenge.id) ? "solved" : ""
                     }`}
