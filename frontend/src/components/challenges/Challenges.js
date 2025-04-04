@@ -73,7 +73,7 @@ function Challenges() {
   }, [user]);
 
   useEffect(() => {
-    const fetchSentChallenges = async () => {
+    const fetchChallenges = async () => {
       if (filter.solvedStatus === "sent" && user) {
         try {
           const response = await axios.get(
@@ -82,6 +82,15 @@ function Challenges() {
           setAllChallenges(response.data);
         } catch (error) {
           console.error("Error fetching sent challenges:", error);
+        }
+      } else if (filter.solvedStatus === "received" && user) {
+        try {
+          const response = await axios.get(
+            `http://localhost:8000/users/${user.id}/received-challenges`
+          );
+          setAllChallenges(response.data);
+        } catch (error) {
+          console.error("Error fetching received challenges:", error);
         }
       } else {
         const fetchAll = async () => {
@@ -95,7 +104,7 @@ function Challenges() {
         fetchAll();
       }
     };
-    fetchSentChallenges();
+    fetchChallenges();
   }, [filter.solvedStatus, user]);
 
   const fetchTags = useCallback(async () => {
@@ -287,7 +296,7 @@ function Challenges() {
       output: newChallenge.output,
       difficulty: newChallenge.difficulty,
       language: newChallenge.language,
-      tags: newChallenge.tags, // Include tags in the challenge submission
+      tags: newChallenge.tags,
     };
 
     try {
@@ -435,6 +444,7 @@ function Challenges() {
                   <option value="solved">Solved Challenges</option>
                   <option value="unsolved">Unsolved Challenges</option>
                   <option value="sent">Sent Challenges</option>
+                  <option value="received">Received Challenges</option>
                 </select>
                 <select
                   name="sortBy"
@@ -509,9 +519,16 @@ function Challenges() {
                     <span>{challenge.title}</span>
                     <span>{challenge.language}</span>
                     <span>{challenge.difficulty}</span>
-                    {challenge.friend_username && (
-                      <span>Sent to: {challenge.friend_username}</span>
-                    )}
+                    {filter.solvedStatus === "sent" &&
+                      challenge.friend_username && (
+                        <span>Sent to: {challenge.friend_username}</span>
+                      )}
+                    {filter.solvedStatus === "received" &&
+                      challenge.challenger_username && (
+                        <span>
+                          Challenged by: {challenge.challenger_username}
+                        </span>
+                      )}
                     <div className="button-container-challenges">
                       <button
                         className="button-challenges solo-button"
