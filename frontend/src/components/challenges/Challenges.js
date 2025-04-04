@@ -342,12 +342,14 @@ function Challenges() {
       toast.error("Please select at least one friend to challenge.");
       return;
     }
+
     try {
       const challenge = allChallenges.find((c) => c.id === currentChallengeId);
       if (!challenge) throw new Error("Challenge not found.");
 
       await Promise.all(
         selectedFriends.map(async (friendUsername) => {
+          // Fetch the recipient's user data
           const userResponse = await axios.get(
             `http://localhost:8000/users/search`,
             { params: { query: friendUsername } }
@@ -356,6 +358,25 @@ function Challenges() {
           if (!recipient) {
             throw new Error(`User ${friendUsername} not found`);
           }
+
+          // Fetch notifications for the recipient
+          const existingNotifications = await axios.get(
+            `http://localhost:8000/users/${recipient.id}/notifications`
+          );
+
+          // Check if a notification for this challenge already exists
+          const alreadySent = existingNotifications.data.some(
+            (notification) =>
+              notification.link === `/soloChallenge/${currentChallengeId}` &&
+              notification.recipient_id === recipient.id
+          );
+
+          if (alreadySent) {
+            toast.info(`Challenge already sent to ${friendUsername}.`);
+            return;
+          }
+
+          // Send the challenge notification
           await axios.post(`http://localhost:8000/notifications`, {
             recipient_id: recipient.id,
             message: `You have been challenged to "${challenge.title}" challenge by "${user.username}"!`,
@@ -363,10 +384,11 @@ function Challenges() {
             challenger_username: user.username,
             challenge_id: currentChallengeId,
           });
+
+          toast.success(`Challenge sent to ${friendUsername}!`);
         })
       );
 
-      toast.success("Challenge sent successfully!");
       setShowFriendsModal(false);
       setSelectedFriends([]);
     } catch (error) {
