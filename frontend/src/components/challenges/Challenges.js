@@ -521,12 +521,46 @@ function Challenges() {
                       >
                         Solo Challenge
                       </button>
-                      <button
-                        className="button-challenges friend-button"
-                        onClick={() => openFriendsModal(challenge.id)}
-                      >
-                        Challenge a Friend
-                      </button>
+                      {filter.solvedStatus === "sent" &&
+                      challenge.friend_username ? (
+                        <button
+                          className="button-challenges friend-button"
+                          onClick={async () => {
+                            try {
+                              // Send a reminder notification
+                              await axios.post(
+                                `http://localhost:8000/notifications`,
+                                {
+                                  recipient_id: friends.find(
+                                    (friend) =>
+                                      friend.username ===
+                                      challenge.friend_username
+                                  )?.id,
+                                  message: `Reminder: You have been challenged to "${challenge.title}" by "${user.username}"!`,
+                                  link: `/soloChallenge/${challenge.id}`,
+                                  challenger_username: user.username,
+                                  challenge_id: challenge.id,
+                                }
+                              );
+                              toast.success(
+                                `Reminder sent to ${challenge.friend_username}!`
+                              );
+                            } catch (error) {
+                              console.error("Error sending reminder:", error);
+                              toast.error("Failed to send reminder.");
+                            }
+                          }}
+                        >
+                          Remind Friend
+                        </button>
+                      ) : (
+                        <button
+                          className="button-challenges friend-button"
+                          onClick={() => openFriendsModal(challenge.id)}
+                        >
+                          Challenge a Friend
+                        </button>
+                      )}
                       {user && user.role === "admin" && (
                         <button
                           className="button-challenges delete-button"
