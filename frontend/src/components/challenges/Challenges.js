@@ -368,33 +368,25 @@ function Challenges() {
             throw new Error(`User ${friendUsername} not found`);
           }
 
-          // Fetch notifications for the recipient
-          const existingNotifications = await axios.get(
-            `http://localhost:8000/users/${recipient.id}/notifications`
-          );
-
-          // Check if a notification for this challenge already exists
-          const alreadySent = existingNotifications.data.some(
-            (notification) =>
-              notification.link === `/soloChallenge/${currentChallengeId}` &&
-              notification.recipient_id === recipient.id
-          );
-
-          if (alreadySent) {
-            toast.info(`Challenge already sent to ${friendUsername}.`);
-            return;
-          }
-
           // Send the challenge notification
-          await axios.post(`http://localhost:8000/notifications`, {
-            recipient_id: recipient.id,
-            message: `You have been challenged to "${challenge.title}" challenge by "${user.username}"!`,
-            link: `/soloChallenge/${currentChallengeId}`,
-            challenger_username: user.username,
-            challenge_id: currentChallengeId,
-          });
-
-          toast.success(`Challenge sent to ${friendUsername}!`);
+          try {
+            await axios.post(`http://localhost:8000/notifications`, {
+              recipient_id: recipient.id,
+              message: `You have been challenged to "${challenge.title}" challenge by "${user.username}"!`,
+              link: `/soloChallenge/${currentChallengeId}`,
+              challenger_username: user.username,
+              challenge_id: currentChallengeId,
+            });
+            toast.success(`Challenge sent to ${friendUsername}!`);
+          } catch (error) {
+            if (error.response && error.response.status === 400) {
+              // Handle specific backend error messages
+              toast.error(error.response.data.detail);
+            } else {
+              console.error("Error sending challenge:", error);
+              toast.error("Failed to send challenge.");
+            }
+          }
         })
       );
 
@@ -557,6 +549,7 @@ function Challenges() {
                                   link: `/soloChallenge/${challenge.id}`,
                                   challenger_username: user.username,
                                   challenge_id: challenge.id,
+                                  reminder: true, // Add the reminder flag
                                 }
                               );
                               toast.success(
@@ -564,7 +557,10 @@ function Challenges() {
                               );
                             } catch (error) {
                               console.error("Error sending reminder:", error);
-                              toast.error("Failed to send reminder.");
+                              toast.error(
+                                error.response?.data?.detail ||
+                                  "Failed to send reminder."
+                              );
                             }
                           }}
                         >

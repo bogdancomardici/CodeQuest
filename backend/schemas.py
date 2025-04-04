@@ -236,6 +236,7 @@ class NotificationCreate(BaseModel):
     link: str
     challenger_username: str
     challenge_id: int
+    reminder: bool = False  # Add this flag to differentiate reminders
 
 
 class NotificationRead(BaseModel):

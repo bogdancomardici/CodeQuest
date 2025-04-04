@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from models import (
     Base,
+    ChallengeHistory,
     ChallengeTag,
     CommentLike,
     Notification,
@@ -144,6 +145,70 @@ def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
 def create_notification(
     notification: NotificationCreate, db: Session = Depends(get_db)
 ):
+    # Check if the sender exists
+    sender = db.query(User).filter(
+        User.username == notification.challenger_username).first()
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender not found")
+
+    # Check if the challenge already exists in the ChallengeHistory table
+    existing_history = db.query(ChallengeHistory).filter(
+        ChallengeHistory.sender_id == sender.id,
+        ChallengeHistory.recipient_id == notification.recipient_id,
+        ChallengeHistory.challenge_id == notification.challenge_id
+    ).first()
+
+    if existing_history:
+        if notification.reminder:
+            # Check if a reminder notification already exists
+            existing_reminder = db.query(Notification).filter(
+                Notification.recipient_id == notification.recipient_id,
+                Notification.challenge_id == notification.challenge_id,
+                # Check if it's a reminder
+                Notification.message.like("Reminder:%")
+            ).first()
+
+            if existing_reminder:
+                raise HTTPException(
+                    status_code=400,
+                    detail="A reminder for this challenge has already been sent."
+                )
+
+            # Allow sending a reminder if no existing reminder is found
+            db_notification = Notification(
+                recipient_id=notification.recipient_id,
+                message=notification.message,  # Use the reminder message
+                link=notification.link,
+                challenger_username=notification.challenger_username,
+                challenge_id=notification.challenge_id
+            )
+            db.add(db_notification)
+            db.commit()
+            db.refresh(db_notification)
+            return db_notification
+
+        # If the challenge is pending, inform the user that it was already sent
+        if existing_history.status == "pending":
+            raise HTTPException(
+                status_code=400,
+                detail="This challenge has already been sent and is pending."
+            )
+        # If the challenge is completed, inform the user that it was already completed
+        elif existing_history.status == "completed":
+            raise HTTPException(
+                status_code=400,
+                detail="This challenge has already been completed."
+            )
+
+    # If the challenge does not exist in history, add it to ChallengeHistory and create a notification
+    db_challenge_history = ChallengeHistory(
+        sender_id=sender.id,
+        recipient_id=notification.recipient_id,
+        challenge_id=notification.challenge_id,
+        status="pending"  # Default status when a challenge is sent
+    )
+    db.add(db_challenge_history)
+
     db_notification = Notification(
         recipient_id=notification.recipient_id,
         message=notification.message,
@@ -152,6 +217,7 @@ def create_notification(
         challenge_id=notification.challenge_id
     )
     db.add(db_notification)
+
     db.commit()
     db.refresh(db_notification)
     return db_notification
@@ -758,6 +824,15 @@ def submit_code(
         db.commit()
         print(f"User {user.id} solved challenge {db_challenge.id}")
 
+        # Update the ChallengeHistory table to mark the challenge as completed
+        challenge_history = db.query(ChallengeHistory).filter(
+            ChallengeHistory.challenge_id == submission.challenge_id,
+            ChallengeHistory.recipient_id == submission.user_id
+        ).first()
+        if challenge_history:
+            challenge_history.status = "completed"
+            db.commit()
+
     return {
         "status": CodeSubmissionStatus(
             id=result_data["status"]["id"],
@@ -1180,10 +1255,25 @@ def get_user_challenges(user_id: int, db: Session = Depends(get_db)):
 
 @app.post("/users/challenges/", response_model=UserChallengeRead)
 def add_user_challenge(user_id: int, challenge_id: int, solution: str, db: Session = Depends(get_db)):
+    # Add the challenge to the UserChallenge table
     user_challenge = UserChallenge(
-        user_id=user_id, challenge_id=challenge_id, solution=solution)
+        user_id=user_id,
+        challenge_id=challenge_id,
+        solution=solution
+    )
     db.add(user_challenge)
+
+    # Add the challenge to the ChallengeHistory table
+    challenge_history = ChallengeHistory(
+        sender_id=None,  # No sender in this case
+        recipient_id=user_id,
+        challenge_id=challenge_id,
+        status="completed"  # Mark as completed since it's manually added
+    )
+    db.add(challenge_history)
+
     db.commit()
+    db.refresh(user_challenge)
     return user_challenge
 
 
@@ -1224,37 +1314,31 @@ def get_user_solved_challenges(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/users/{user_id}/sent-challenges", response_model=List[ChallengeRead])
 def get_user_sent_challenges(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    sent_challenges = db.query(Challenge, User.username.label("friend_username")).join(Notification, Notification.challenge_id == Challenge.id).join(
-        User, User.id == Notification.recipient_id).filter(Notification.challenger_username == user.username).all()
+    sent_challenges = db.query(ChallengeHistory).join(Challenge).filter(
+        ChallengeHistory.sender_id == user_id
+    ).all()
 
     challenge_list = []
-    for challenge, friend_username in sent_challenges:
-        challenge_dict = challenge.__dict__.copy()
-        challenge_dict['friend_username'] = friend_username
+    for record in sent_challenges:
+        challenge_dict = record.challenge.__dict__.copy()
+        challenge_dict['friend_username'] = record.recipient.username
         challenge_dict['tags'] = [tag.tag_id for tag in db.query(
-            ChallengeTag).filter_by(challenge_id=challenge.id).all()]
+            ChallengeTag).filter_by(challenge_id=record.challenge.id).all()]
         challenge_list.append(challenge_dict)
     return challenge_list
 
 
 @app.get("/users/{user_id}/received-challenges", response_model=List[ChallengeRead])
 def get_user_received_challenges(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    received_challenges = db.query(Challenge, Notification.challenger_username.label("challenger_username")).join(
-        Notification, Notification.challenge_id == Challenge.id).filter(Notification.recipient_id == user.id).all()
+    received_challenges = db.query(ChallengeHistory).join(Challenge).filter(
+        ChallengeHistory.recipient_id == user_id
+    ).all()
 
     challenge_list = []
-    for challenge, challenger_username in received_challenges:
-        challenge_dict = challenge.__dict__.copy()
-        challenge_dict['challenger_username'] = challenger_username
+    for record in received_challenges:
+        challenge_dict = record.challenge.__dict__.copy()
+        challenge_dict['challenger_username'] = record.sender.username
         challenge_dict['tags'] = [tag.tag_id for tag in db.query(
-            ChallengeTag).filter_by(challenge_id=challenge.id).all()]
+            ChallengeTag).filter_by(challenge_id=record.challenge.id).all()]
         challenge_list.append(challenge_dict)
     return challenge_list
