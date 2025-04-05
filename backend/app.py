@@ -731,7 +731,8 @@ def submit_code(
     )
     if user_challenge:
         raise HTTPException(
-            status_code=400, detail="You have already solved this challenge")
+            status_code=400, detail="You have already solved this challenge"
+        )
 
     try:
         code_b64 = base64.b64encode(submission.source_code.encode("utf-8")).decode(
@@ -764,7 +765,8 @@ def submit_code(
     submission_token = create_submission.json().get("token")
     if not submission_token:
         raise HTTPException(
-            status_code=500, detail="Submission token not received.")
+            status_code=500, detail="Submission token not received."
+        )
 
     result = requests.get(
         f"{JUDGE0_URL}/submissions/{submission_token}?base64_encoded=false",
@@ -780,10 +782,8 @@ def submit_code(
 
     # Check for compilation or runtime errors
     if result_data["status"]["id"] != 3:  # Status ID 3 means "Accepted"
-        error_message = base64.b64decode(
-            result_data.get("message", "")).decode("utf-8")
-        stderr = base64.b64decode(
-            result_data.get("stderr", "")).decode("utf-8")
+        error_message = result_data.get("message", "")
+        stderr = result_data.get("stderr", "")
         raise HTTPException(
             status_code=400,
             detail=f"Error: {result_data['status']['description']}\nMessage: {error_message}\nStderr: {stderr}",
@@ -814,7 +814,8 @@ def submit_code(
             )
             if first_problem_badge:
                 user_badge = UserBadge(
-                    user_id=user.id, badge_id=first_problem_badge.id)
+                    user_id=user.id, badge_id=first_problem_badge.id
+                )
                 db.add(user_badge)
                 db.commit()
                 badge_awarded = first_problem_badge.title
@@ -832,11 +833,48 @@ def submit_code(
         # Update the ChallengeHistory table to mark the challenge as completed
         challenge_history = db.query(ChallengeHistory).filter(
             ChallengeHistory.challenge_id == submission.challenge_id,
-            ChallengeHistory.recipient_id == submission.user_id
+            ChallengeHistory.recipient_id == submission.user_id,
         ).first()
         if challenge_history:
             challenge_history.status = "completed"
             db.commit()
+
+            # Award bonus points to the sender
+            sender = db.query(User).filter(
+                User.id == challenge_history.sender_id).first()
+            if sender:
+                # 10% of the awarded points
+                bonus_points_sender = int(points_awarded * 0.1)
+                sender.reward_points += bonus_points_sender
+                db.commit()
+                print(
+                    f"Sender {sender.id} awarded bonus points: {bonus_points_sender} for challenge {db_challenge.id}"
+                )
+
+                # Send notification to the sender
+                notification_message = (
+                    f"Your friend {user.username} completed challenge '{db_challenge.title}' "
+                    f"within {submission.time} seconds and you were awarded {bonus_points_sender} bonus points."
+                )
+                db_notification = Notification(
+                    recipient_id=sender.id,
+                    message=notification_message,
+                    link=f"/soloChallenge/{db_challenge.id}",
+                    challenger_username=user.username,
+                    challenge_id=db_challenge.id,
+                )
+                db.add(db_notification)
+                db.commit()
+                print(
+                    f"Notification sent to sender {sender.id}: {notification_message}")
+
+            # Award bonus points to the recipient
+            bonus_points_recipient = int(points_awarded * 0.1)
+            user.reward_points += bonus_points_recipient
+            db.commit()
+            print(
+                f"Recipient {user.id} awarded bonus points: {bonus_points_recipient} for completing challenge {db_challenge.id}"
+            )
 
     return {
         "status": CodeSubmissionStatus(
@@ -847,7 +885,7 @@ def submit_code(
         "stderr": result_data.get("stderr", "") or "",
         "expected_output": db_challenge.output,
         "actual_output": result_data.get("stdout", ""),
-        "time": result_data.get("time", ""),
+        "time": str(submission.time),
         "memory": result_data.get("memory", 0),
         "token": submission_token,
         "compile_output": result_data.get("compile_output", "") or "",

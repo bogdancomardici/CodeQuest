@@ -26,7 +26,8 @@ export const submitCode = async (
   languageId,
   stdin,
   expectedOutput,
-  user_id
+  user_id,
+  time
 ) => {
   try {
     const response = await api.post("/submit-code", {
@@ -36,6 +37,7 @@ export const submitCode = async (
       stdin: stdin,
       expected_output: expectedOutput,
       user_id: user_id,
+      time: time,
     });
     return response.data;
   } catch (error) {
