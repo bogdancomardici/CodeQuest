@@ -56,6 +56,7 @@ function Challenges() {
   const [likes, setLikes] = useState({});
   const [tags, setTags] = useState([]);
   const [challengeTags, setChallengeTags] = useState({});
+  const [visibleChallenges, setVisibleChallenges] = useState([]);
 
   useEffect(() => {
     const fetchSolvedChallenges = async () => {
@@ -80,6 +81,12 @@ function Challenges() {
             `http://localhost:8000/users/${user.id}/sent-challenges`
           );
           setAllChallenges(response.data);
+
+          response.forEach((_, index) => {
+            setTimeout(() => {
+              setVisibleChallenges((prev) => [...prev, index]);
+            }, index * 200);
+          });
         } catch (error) {
           console.error("Error fetching sent challenges:", error);
         }
@@ -506,7 +513,10 @@ function Challenges() {
                     }-${index}`}
                     className={`list-item-challenges ${
                       solvedChallenges.includes(challenge.id) ? "solved" : ""
-                    }`}
+                    } ${visibleChallenges.includes(index) ? "visible" : ""}`}
+                    style={{
+                      animationDelay: `${index * 0.2}s`,
+                    }}
                   >
                     <span>{challenge.title}</span>
                     <span>{challenge.language}</span>

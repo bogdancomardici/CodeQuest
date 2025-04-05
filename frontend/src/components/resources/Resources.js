@@ -17,6 +17,7 @@ import "./resources.css";
 function Resources() {
   const [allResources, setAllResources] = useState([]);
   const [resourceTags, setResourceTags] = useState({});
+  const [visibleResources, setVisibleResources] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState({
     sortBy: "latest",
@@ -98,6 +99,12 @@ function Resources() {
       try {
         const data = await getAllResources();
         setAllResources(data);
+
+        data.forEach((_, index) => {
+          setTimeout(() => {
+            setVisibleResources((prev) => [...prev, index]);
+          }, index * 200);
+        });
       } catch (error) {
         console.error("Error fetching resources:", error);
       }
@@ -171,7 +178,7 @@ function Resources() {
   useEffect(() => {
     console.log("User:", user);
     fetchPurchasedResources();
-  }, [fetchPurchasedResources]);
+  }, [fetchPurchasedResources, user]);
 
   const handleItemClick = (id) => {
     if (purchasedResources.includes(id)) {
@@ -357,10 +364,15 @@ function Resources() {
 
             <div className="list-container-resources">
               <ul className="list-resources">
-                {currentPageResources.map((resource) => (
+                {currentPageResources.map((resource, index) => (
                   <li
                     key={resource.id}
-                    className="list-item-resources"
+                    className={`list-item-resources ${
+                      visibleResources.includes(index) ? "visible" : ""
+                    }`}
+                    style={{
+                      animationDelay: `${index * 0.2}s`,
+                    }}
                     onClick={() => handleItemClick(resource.id)}
                   >
                     <div className="resource-content">
