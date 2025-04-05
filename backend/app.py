@@ -435,7 +435,11 @@ def read_challenges(skip: int = 0, limit: int = 10, user_id: Optional[int] = Non
                 (ChallengeHistory.sender_id == user_id) | (
                     ChallengeHistory.recipient_id == user_id)
             ).first()
-            challenge_dict['status'] = history.status if history else "unsolved"
+            if history:
+                challenge_dict['status'] = history.status
+            else:
+                # Default to "unsolved" if no history exists
+                challenge_dict['status'] = "unsolved"
         else:
             # Default to None if no user_id is provided
             challenge_dict['status'] = None

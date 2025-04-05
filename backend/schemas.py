@@ -160,6 +160,7 @@ class CodeSubmission(BaseModel):
     stdin: str
     expected_output: str
     user_id: int
+    time: int
 
 
 # {

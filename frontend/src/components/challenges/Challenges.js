@@ -19,8 +19,6 @@ import "./challenges.css";
 
 function Challenges() {
   const [allChallenges, setAllChallenges] = useState([]);
-  const [solvedChallenges, setSolvedChallenges] = useState([]);
-
   const [page, setPage] = useState(0);
   const challengesPerPage = 5;
 
@@ -59,21 +57,6 @@ function Challenges() {
   const [visibleChallenges] = useState([]);
 
   useEffect(() => {
-    const fetchSolvedChallenges = async () => {
-      if (!user) return;
-      try {
-        const response = await axios.get(
-          `http://localhost:8000/users/${user.id}/solved-challenges`
-        );
-        setSolvedChallenges(response.data.map((challenge) => challenge.id));
-      } catch (error) {
-        console.error("Error fetching solved challenges:", error);
-      }
-    };
-    fetchSolvedChallenges();
-  }, [user]);
-
-  useEffect(() => {
     const fetchChallenges = async () => {
       if (filter.solvedStatus === "sent" && user) {
         try {
@@ -81,15 +64,6 @@ function Challenges() {
             `http://localhost:8000/users/${user.id}/sent-challenges`
           );
           setAllChallenges(response.data);
-
-          // Separate challenges with "completed" status
-          const completedChallenges = response.data
-            .filter((challenge) => challenge.status === "completed")
-            .map((challenge) => challenge.id);
-
-          setSolvedChallenges((prev) => [
-            ...new Set([...prev, ...completedChallenges]),
-          ]);
         } catch (error) {
           console.error("Error fetching sent challenges:", error);
         }
@@ -249,9 +223,11 @@ function Challenges() {
     }
 
     if (filter.solvedStatus === "solved") {
-      filtered = filtered.filter((ch) => solvedChallenges.includes(ch.id));
+      filtered = filtered.filter((ch) => ch.status === "completed");
     } else if (filter.solvedStatus === "unsolved") {
-      filtered = filtered.filter((ch) => !solvedChallenges.includes(ch.id));
+      filtered = filtered.filter(
+        (ch) => ch.status === "pending" || ch.status === "unsolved"
+      );
     }
 
     if (filter.sortBy === "latest") {
@@ -263,14 +239,7 @@ function Challenges() {
     }
 
     return filtered;
-  }, [
-    allChallenges,
-    searchTerm,
-    filter,
-    likes,
-    challengeTags,
-    solvedChallenges,
-  ]);
+  }, [allChallenges, searchTerm, filter, likes, challengeTags]);
 
   const startIndex = page * challengesPerPage;
   const endIndex = startIndex + challengesPerPage;
