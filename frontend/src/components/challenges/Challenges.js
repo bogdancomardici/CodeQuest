@@ -56,7 +56,7 @@ function Challenges() {
   const [likes, setLikes] = useState({});
   const [tags, setTags] = useState([]);
   const [challengeTags, setChallengeTags] = useState({});
-  const [visibleChallenges, setVisibleChallenges] = useState([]);
+  const [visibleChallenges] = useState([]);
 
   useEffect(() => {
     const fetchSolvedChallenges = async () => {
@@ -82,11 +82,14 @@ function Challenges() {
           );
           setAllChallenges(response.data);
 
-          response.forEach((_, index) => {
-            setTimeout(() => {
-              setVisibleChallenges((prev) => [...prev, index]);
-            }, index * 200);
-          });
+          // Separate challenges with "completed" status
+          const completedChallenges = response.data
+            .filter((challenge) => challenge.status === "completed")
+            .map((challenge) => challenge.id);
+
+          setSolvedChallenges((prev) => [
+            ...new Set([...prev, ...completedChallenges]),
+          ]);
         } catch (error) {
           console.error("Error fetching sent challenges:", error);
         }
@@ -102,7 +105,7 @@ function Challenges() {
       } else {
         const fetchAll = async () => {
           try {
-            const data = await getAllChallenges();
+            const data = await getAllChallenges(user.id);
             setAllChallenges(data);
           } catch (error) {
             console.error("Error fetching challenges:", error);
@@ -196,18 +199,6 @@ function Challenges() {
   useEffect(() => {
     fetchLikes();
   }, [fetchLikes]);
-
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const data = await getAllChallenges();
-        setAllChallenges(data);
-      } catch (error) {
-        console.error("Error fetching challenges:", error);
-      }
-    };
-    fetchAll();
-  }, []);
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -320,8 +311,8 @@ function Challenges() {
         tags: [], // Reset tags
       });
       setPage(0);
+      const updated = await getAllChallenges(user.id);
 
-      const updated = await getAllChallenges();
       setAllChallenges(updated);
     } catch (error) {
       console.error("Error adding challenge:", error);
@@ -504,15 +495,9 @@ function Challenges() {
               <ul className="list-challenges">
                 {currentPageChallenges.map((challenge, index) => (
                   <li
-                    key={`${challenge.id}-${
-                      challenge.isSent
-                        ? "sent"
-                        : challenge.isReceived
-                        ? "received"
-                        : "normal"
-                    }-${index}`}
+                    key={`${challenge.id}-${challenge.status}-${index}`}
                     className={`list-item-challenges ${
-                      solvedChallenges.includes(challenge.id) ? "solved" : ""
+                      challenge.status === "completed" ? "solved" : ""
                     } ${visibleChallenges.includes(index) ? "visible" : ""}`}
                     style={{
                       animationDelay: `${index * 0.2}s`,
@@ -546,7 +531,6 @@ function Challenges() {
                           className="button-challenges friend-button"
                           onClick={async () => {
                             try {
-                              // Send a reminder notification
                               await axios.post(
                                 `http://localhost:8000/notifications`,
                                 {
@@ -559,7 +543,7 @@ function Challenges() {
                                   link: `/soloChallenge/${challenge.id}`,
                                   challenger_username: user.username,
                                   challenge_id: challenge.id,
-                                  reminder: true, // Add the reminder flag
+                                  reminder: true,
                                 }
                               );
                               toast.success(

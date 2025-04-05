@@ -73,10 +73,12 @@ export const deleteChallenge = async (id) => {
   }
 };
 
-
-export const getAllChallenges = async () => {
+export const getAllChallenges = async (userId) => {
   try {
-    const response = await api.get("/challenges?skip=0&limit=99999");
+    const url = userId
+      ? `/challenges?skip=0&limit=99999&user_id=${userId}`
+      : `/challenges?skip=0&limit=99999`;
+    const response = await api.get(url);
     return response.data;
   } catch (error) {
     console.error("Error fetching all challenges:", error);

@@ -420,38 +420,28 @@ def create_challenge(ch_data: ChallengeCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/challenges/", response_model=List[ChallengeRead])
-def read_challenges(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+def read_challenges(skip: int = 0, limit: int = 10, user_id: Optional[int] = None, db: Session = Depends(get_db)):
     challenges = db.query(Challenge).offset(skip).limit(limit).all()
     challenge_list = []
     for challenge in challenges:
         challenge_dict = challenge.__dict__.copy()
         challenge_dict['tags'] = [tag.tag_id for tag in db.query(
             ChallengeTag).filter_by(challenge_id=challenge.id).all()]
+
+        # Add status based on ChallengeHistory if user_id is provided
+        if user_id:
+            history = db.query(ChallengeHistory).filter(
+                ChallengeHistory.challenge_id == challenge.id,
+                (ChallengeHistory.sender_id == user_id) | (
+                    ChallengeHistory.recipient_id == user_id)
+            ).first()
+            challenge_dict['status'] = history.status if history else "unsolved"
+        else:
+            # Default to None if no user_id is provided
+            challenge_dict['status'] = None
         challenge_list.append(challenge_dict)
+
     return challenge_list
-
-
-@app.get("/challenges/filter", response_model=List[ChallengeRead])
-def filter_challenges(
-    sort_by: str = "latest",
-    language: Optional[str] = None,
-    difficulty: Optional[str] = None,
-    db: Session = Depends(get_db),
-):
-    query = db.query(Challenge)
-
-    if language:
-        query = query.filter(Challenge.language == language)
-
-    if difficulty:
-        query = query.filter(Challenge.difficulty == difficulty)
-
-    if sort_by == "latest":
-        query = query.order_by(Challenge.id.desc())
-    elif sort_by == "oldest":
-        query = query.order_by(Challenge.id.asc())
-
-    return query.all()
 
 
 @app.get("/challenges/like/{challenge_id}", response_model=List[ChallengeLikeRead])
@@ -501,14 +491,25 @@ def get_challenges_likes(db: Session = Depends(get_db)):
 
 
 @app.get("/challenges/{challenge_id}", response_model=ChallengeRead)
-def read_challenge(challenge_id: int, db: Session = Depends(get_db)):
+def read_challenge(challenge_id: int, user_id: Optional[int] = None, db: Session = Depends(get_db)):
     challenge = db.query(Challenge).filter(
         Challenge.id == challenge_id).first()
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found")
+
     challenge_dict = challenge.__dict__.copy()
     challenge_dict['tags'] = [tag.tag_id for tag in db.query(
         ChallengeTag).filter_by(challenge_id=challenge.id).all()]
+
+    # Add status based on ChallengeHistory if user_id is provided
+    if user_id:
+        history = db.query(ChallengeHistory).filter(
+            ChallengeHistory.challenge_id == challenge.id,
+            (ChallengeHistory.sender_id == user_id) | (
+                ChallengeHistory.recipient_id == user_id)
+        ).first()
+        challenge_dict['status'] = history.status if history else None
+
     return challenge_dict
 
 
@@ -1324,7 +1325,17 @@ def get_user_sent_challenges(user_id: int, db: Session = Depends(get_db)):
         challenge_dict['friend_username'] = record.recipient.username
         challenge_dict['tags'] = [tag.tag_id for tag in db.query(
             ChallengeTag).filter_by(challenge_id=record.challenge.id).all()]
+
+        # Check if the recipient has completed the challenge
+        recipient_history = db.query(ChallengeHistory).filter(
+            ChallengeHistory.recipient_id == record.recipient_id,
+            ChallengeHistory.challenge_id == record.challenge_id,
+            ChallengeHistory.status == "completed"
+        ).first()
+
+        challenge_dict['status'] = "completed" if recipient_history else "pending"
         challenge_list.append(challenge_dict)
+
     return challenge_list
 
 
@@ -1340,5 +1351,9 @@ def get_user_received_challenges(user_id: int, db: Session = Depends(get_db)):
         challenge_dict['challenger_username'] = record.sender.username
         challenge_dict['tags'] = [tag.tag_id for tag in db.query(
             ChallengeTag).filter_by(challenge_id=record.challenge.id).all()]
+
+        # Append the status from ChallengeHistory
+        challenge_dict['status'] = record.status
+
         challenge_list.append(challenge_dict)
     return challenge_list

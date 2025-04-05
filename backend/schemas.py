@@ -115,6 +115,7 @@ class ChallengeRead(BaseModel):
     language: str
     tags: List[int]
     friend_username: Optional[str] = None
+    status: Optional[str] = None
 
     class Config:
         from_attributes = True

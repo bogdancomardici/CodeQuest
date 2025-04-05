@@ -17,7 +17,7 @@ import "./resources.css";
 function Resources() {
   const [allResources, setAllResources] = useState([]);
   const [resourceTags, setResourceTags] = useState({});
-  const [visibleResources, setVisibleResources] = useState([]);
+  const [visibleResources] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState({
     sortBy: "latest",
@@ -99,12 +99,6 @@ function Resources() {
       try {
         const data = await getAllResources();
         setAllResources(data);
-
-        data.forEach((_, index) => {
-          setTimeout(() => {
-            setVisibleResources((prev) => [...prev, index]);
-          }, index * 200);
-        });
       } catch (error) {
         console.error("Error fetching resources:", error);
       }
