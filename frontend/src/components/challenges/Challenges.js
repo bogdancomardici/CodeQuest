@@ -480,10 +480,8 @@ function Challenges() {
                         <span>Sent to: {challenge.friend_username}</span>
                       )}
                     {filter.solvedStatus === "received" &&
-                      challenge.challenger_username && (
-                        <span>
-                          Challenged by: {challenge.challenger_username}
-                        </span>
+                      challenge.friend_username && (
+                        <span>From: {challenge.friend_username}</span>
                       )}
                     <div className="button-container-challenges">
                       <button

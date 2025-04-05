@@ -1345,19 +1345,31 @@ def get_user_sent_challenges(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/users/{user_id}/received-challenges", response_model=List[ChallengeRead])
 def get_user_received_challenges(user_id: int, db: Session = Depends(get_db)):
-    received_challenges = db.query(ChallengeHistory).join(Challenge).filter(
-        ChallengeHistory.recipient_id == user_id
-    ).all()
+    received_challenges = (
+        db.query(
+            ChallengeHistory,
+            Challenge,
+            User.username.label("sender_username")
+        )
+        .join(Challenge, Challenge.id == ChallengeHistory.challenge_id)
+        .join(User, ChallengeHistory.sender_id == User.id)
+        .filter(ChallengeHistory.recipient_id == user_id)
+        .all()
+    )
 
     challenge_list = []
     for record in received_challenges:
-        challenge_dict = record.challenge.__dict__.copy()
-        challenge_dict['challenger_username'] = record.sender.username
-        challenge_dict['tags'] = [tag.tag_id for tag in db.query(
-            ChallengeTag).filter_by(challenge_id=record.challenge.id).all()]
+        challenge_history = record[0]
+        challenge = record[1]
+        sender_username = record[2]
 
-        # Append the status from ChallengeHistory
-        challenge_dict['status'] = record.status
+        challenge_dict = challenge.__dict__.copy()
+        # Use friend_username
+        challenge_dict['friend_username'] = sender_username
+        challenge_dict['tags'] = [
+            tag.tag_id for tag in db.query(ChallengeTag).filter_by(challenge_id=challenge.id).all()
+        ]
+        challenge_dict['status'] = challenge_history.status
 
         challenge_list.append(challenge_dict)
     return challenge_list
