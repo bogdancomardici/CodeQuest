@@ -1,0 +1,193 @@
+CQ-16 (Docker Configuration)
+Closest Commit: d3d9f75 (Initial commit)
+Details:
+Configured Docker for backend, frontend, and database.
+Added docker-compose for easy deployment.
+
+CQ-13 (FastAPI Setup)
+Closest Commit: bed0c55 (added fastApi backend and container)
+Details:
+Set up FastAPI backend with endpoints for core features.
+Configured backend to work with Docker.
+
+CQ-14 (PostgreSQL Schema)
+Closest Commit: 22274bb (init script)
+Details:
+Created structured PostgreSQL schema with relations.
+Added tables for users, challenges, and resources.
+
+CQ-17 (Compiler Configuration)
+Closest Commit: 1985a90 (Initialized react frontend and dockerized it)
+Details:
+Integrated compiler setup into Docker environment.
+Ensured communication between compiler and backend.
+
+CQ-18 (Navigation & Layout)
+Closest Commit: 15c0cdb (Navbar + first page in the navbar)
+Details:
+Added navigation bar for the frontend.
+Implemented basic layout for the application.
+
+CQ-20 (Responsive Design)
+Closest Commit: f59157b (Added challenge page and insert statement)
+Details:
+Added responsive design elements to the challenge page.
+Improved layout for mobile and tablet devices.
+
+CQ-21 (API Integration)
+Closest Commit: 61edfbd (Merge pull request #1 from bogdancomardici/add_initial_insert_script)
+Details:
+Integrated API endpoints for challenges and resources.
+Added initial database insert scripts.
+
+CQ-22 (View Challenges)
+Closest Commit: ffbb41f (Merge branch 'main' into frontend)
+Details:
+Added functionality to view challenges.
+Implemented filters for difficulty and language.
+
+CQ-9 (User Login)
+Closest Commit: ad96265 (Login logout)
+Details:
+Added secure login functionality.
+Provided access to protected routes based on roles.
+
+CQ-8 (User Registration)
+Closest Commit: e4cd595 (simple login)
+Details:
+Implemented user registration with secure password storage.
+Redirected users to the dashboard after registration.
+
+CQ-10 (Profile Management)
+Closest Commit: cdc825f (User page)
+Details:
+Enabled users to view and edit their profiles.
+Displayed friends list on the profile page.
+
+CQ-11 (Friend Management)
+Closest Commit: 2579fdc (added friends in profile)
+Details:
+Allowed users to add and remove friends.
+Integrated friend management with challenges.
+
+CQ-12 (Admin User Management)
+Closest Commit: 2cf694a (added admin user management and admin and expert challenges and resources manipulation)
+Details:
+Enabled admins to manage user roles and deactivate accounts.
+Added an admin panel for user management.
+
+CQ-23 (Solve Challenge)
+Closest Commit: 6ec590c (implemented terminal instead of textarea -- working)
+Details:
+Allowed users to write and submit code for challenges.
+Validated submissions and provided feedback.
+
+CQ-24 (Challenge a Friend)
+Closest Commit: 505ad25 (Implemented reminder button on sent challenges page)
+Details:
+Enabled users to challenge friends to solve the same problem.
+Sent notifications for friend challenges.
+
+CQ-25 (Notifications)
+Closest Commit: d50c8e4 (Notifications on challenge completion implemented)
+Details:
+Added notifications for friend challenges and completions.
+Displayed notifications in the inbox.
+
+CQ-26 (Track Challenge History)
+Closest Commit: 93040d0 (added reminders and completed/pending challenges tag with challengeHistory table)
+Details:
+Tracked completed challenges and results.
+Displayed challenge history on the dashboard.
+
+CQ-27 (Daily Reward)
+Closest Commit: 1286a6d (daily spin added and functional)
+Details:
+Added daily login rewards to motivate users.
+Displayed reward notifications on the dashboard.
+
+CQ-28 (Earn Points)
+Closest Commit: 25beb5f (added reward points)
+Details:
+Rewarded users with points for solving challenges.
+Updated points dynamically on the dashboard.
+
+CQ-29 (Unlock Badges)
+Closest Commit: 2ed5163 (added solution field to user challenges)
+Details:
+Awarded badges for reaching milestones.
+Displayed badges on the user profile.
+
+CQ-30 (Leaderboard)
+Closest Commit: e627e5e (Solo + leaderboard)
+Details:
+Added global and friend leaderboards.
+Allowed users to compare their ranks.
+
+-- (Done until this point)
+
+CQ-31 (Dashboard Progress)
+Closest Commit: 4dbd443 (updated dashboard and database to support reward points)
+Details:
+Displayed badges, points, and rank on the dashboard.
+Highlighted the next goal for users.
+
+CQ-32 (View Resources)
+Closest Commit: 6243fb2 (added resource filtering -- filter needs fixing with pagination)
+Details:
+Added functionality to browse learning resources.
+Displayed a list of resources with titles and short descriptions.
+
+CQ-33 (Resource Linking)
+Closest Commit: 72e58e9 (Added filters to challenge page and redesigned dashboard and challenges)
+Details:
+Linked resources to challenges.
+Displayed recommended resources under challenge descriptions.
+
+CQ-34 (Add Resource - Expert)
+Closest Commit: a2fdaf1 (Added proactive reloading after adding resources and challenges)
+Details:
+Enabled experts to add new educational resources.
+Ensured resources appear instantly on the Resources page.
+
+CQ-35 (Comment on Resource)
+Closest Commit: 6f6e3c0 (finished comments in challenge section and fixed some stylings)
+Details:
+Allowed users to comment on resources and challenges.
+Displayed comments instantly with usernames.
+
+CQ-36 (Like System)
+Closest Commit: 164ead8 (Added resource like and fixed buying for new accounts)
+Details:
+Added functionality to like resources and comments.
+Updated like counters dynamically.
+
+CQ-37 (Backend Unit Tests)
+Closest Commit: 2364bbb (Added unit tests)
+Details:
+Implemented automated tests for backend endpoints.
+Ensured stability of core features like authentication and challenges.
+
+CQ-38 (Frontend Unit Tests)
+Closest Commit: 8e0a395 (stylised notification from completing a challenge)
+Details:
+Added unit tests for frontend components.
+Validated UI functionality and interactions.
+
+CQ-39 (Manual UI Tests)
+Closest Commit: d741e11 (cleaned unused lines)
+Details:
+Performed manual testing of the frontend.
+Verified that the UI is intuitive and bug-free.
+
+CQ-40 (API Documentation)
+Closest Commit: 22c3281 (Added tags manipulation and filtering)
+Details:
+Documented API endpoints using Swagger.
+Ensured all routes and schemas are well-documented with examples.
+
+CQ-41 (Expert User Permissions)
+Closest Commit: 2cf694a (added admin user management and admin and expert challenges and resources manipulation)
+Details:
+Granted experts permissions to create challenges and upload resources.
+Ensured expert-created content is instantly visible to all users.
